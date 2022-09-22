@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+**.pdf
+**.png
+**.csv
+**.docx
+**.pptx
+**.ppt
+**FA22-DATS6101-12
+**EAP
