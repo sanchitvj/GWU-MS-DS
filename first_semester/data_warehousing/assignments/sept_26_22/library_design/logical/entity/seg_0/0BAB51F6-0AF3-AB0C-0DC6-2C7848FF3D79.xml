@@ -1,0 +1,97 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Entity class="oracle.dbtools.crest.model.design.logical.Entity" directorySegmentName="seg_0" id="0BAB51F6-0AF3-AB0C-0DC6-2C7848FF3D79" name="Transactions">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:24:19 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+<engineerTo>
+<item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
+</engineerTo>
+<adequatelyNormalized>NO</adequatelyNormalized>
+<expectedVolumes>0</expectedVolumes>
+<fwdEngineeringStrategyName>Single Table</fwdEngineeringStrategyName>
+<growthPercent>0</growthPercent>
+<growthType>Year</growthType>
+<maxVolumes>9999999</maxVolumes>
+<minVolumes>0</minVolumes>
+<normalForm>Third</normalForm>
+<attributes itemClass="oracle.dbtools.crest.model.design.logical.Attribute">
+<Attribute name="transaction_id" id="A3BA7446-F828-972D-4674-A1967ACD1F31">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:24:39 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+<engineerTo>
+<item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
+</engineerTo>
+<use>0</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<domain>DF45FD39-C0CF-71F6-FA1F-2363B3591052</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="transaction_date" id="E2FFEC55-9F5C-E739-F30B-59D1A1926C8E">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:24:57 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+<engineerTo>
+<item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT008</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="transaction_type" id="868AA9C6-9CA9-B52C-B57F-DB91E1AB717D">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:25:29 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+<engineerTo>
+<item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
+</engineerTo>
+<use>0</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<domain>DF45FD39-C0CF-71F6-FA1F-2363B3591052</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="book_id" id="3C10FC59-C26D-4495-286E-3C662A0DA95E">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:30:44 UTC</createdTime>
+<generatorID>FA923853-FEF1-9103-3E79-EEC20377344C</generatorID>
+<ownerDesignName>library_design</ownerDesignName>
+<engineerTo>
+<item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
+</engineerTo>
+<referedAttribute>F8998085-1460-B12C-488B-99ED4B304FD5</referedAttribute>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>9ACDD0A1-98FB-5EB5-69E9-047160A8C412</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="patron_id" id="FCB51F25-3C5B-07EA-D6FB-59ABE68D3F15">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:35:29 UTC</createdTime>
+<generatorID>66259DCE-4208-ABF6-3980-F44083B6272D</generatorID>
+<ownerDesignName>library_design</ownerDesignName>
+<engineerTo>
+<item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
+</engineerTo>
+<referedAttribute>02010356-92C3-F39C-2A28-362A90891A8C</referedAttribute>
+<use>0</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<domain>DF45FD39-C0CF-71F6-FA1F-2363B3591052</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+</attributes>
+<identifiers itemClass="oracle.dbtools.crest.model.design.logical.CandidateKey">
+<identifier id="74CC9E76-8076-300F-6DC9-FD943F82E6C7" name="Transactions PK">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:24:49 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+<engineerTo>
+<item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
+</engineerTo>
+<pk>true</pk>
+<usedAttributes>
+<attributeRef>A3BA7446-F828-972D-4674-A1967ACD1F31</attributeRef>
+</usedAttributes>
+</identifier>
+</identifiers>
+</Entity>

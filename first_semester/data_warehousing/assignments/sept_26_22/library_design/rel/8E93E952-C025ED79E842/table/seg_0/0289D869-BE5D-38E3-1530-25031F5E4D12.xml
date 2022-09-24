@@ -1,0 +1,84 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="0289D869-BE5D-38E3-1530-25031F5E4D12" name="Books">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:42:05 UTC</createdTime>
+<generatorID>B8CD4EBC-8319-F78B-B154-CD3E973AB720</generatorID>
+<ownerDesignName>library_design</ownerDesignName>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<parsed>true</parsed>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="book_id" id="763C4DCC-3FF6-66D0-F912-F2ED0A271776">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:42:05 UTC</createdTime>
+<generatorID>F8998085-1460-B12C-488B-99ED4B304FD5</generatorID>
+<ownerDesignName>library_design</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>9ACDD0A1-98FB-5EB5-69E9-047160A8C412</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="tilte" id="3294F17C-C96A-2242-FDF3-D9297F2F1A9E">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:42:05 UTC</createdTime>
+<generatorID>FEFA0515-F9EE-291D-934D-B74AE85DAC90</generatorID>
+<ownerDesignName>library_design</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>E0E43D2C-93ED-D83C-2C85-A8138566283C</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="author_last_name" id="746D7AE2-74B7-21EE-CF1C-682A76962EDA">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:42:05 UTC</createdTime>
+<generatorID>CCCA9B58-BD23-5FA1-8D50-C2481CA1FD4C</generatorID>
+<ownerDesignName>library_design</ownerDesignName>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>49ED77EE-3768-7451-E690-10D1D023E3ED</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="author_first_name" id="A49C5CE8-AC60-5105-E1B0-872D3DF243CA">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:42:05 UTC</createdTime>
+<generatorID>36C87E54-2E06-8752-C7A3-0A6018B4F275</generatorID>
+<ownerDesignName>library_design</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>49ED77EE-3768-7451-E690-10D1D023E3ED</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="rating" id="F19C1CF4-302D-F629-7A78-7CAA6DE5D342">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:42:05 UTC</createdTime>
+<generatorID>7BAE0458-45E5-FEB4-C903-ED65B979402C</generatorID>
+<ownerDesignName>library_design</ownerDesignName>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<dataTypePrecision>2</dataTypePrecision>
+<ownDataTypeParameters>,2,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="91B067EC-5012-42F0-BC4D-FD91696C5F3E" name="Books_PK">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-24 21:42:05 UTC</createdTime>
+<generatorID>4C51A78F-45B6-96D8-0FAC-D0A4C33AC936</generatorID>
+<ownerDesignName>library_design</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="763C4DCC-3FF6-66D0-F912-F2ED0A271776"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+</Table>
