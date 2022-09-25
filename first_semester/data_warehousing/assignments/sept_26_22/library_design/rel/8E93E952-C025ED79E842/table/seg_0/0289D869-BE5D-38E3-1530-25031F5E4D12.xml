@@ -15,7 +15,7 @@
 <ownerDesignName>library_design</ownerDesignName>
 <use>0</use>
 <logicalDatatype>LOGDT024</logicalDatatype>
-<domain>9ACDD0A1-98FB-5EB5-69E9-047160A8C412</domain>
+<domain>A0FC1D71-E2B7-BB36-DDE6-C1D0EA06FDD2</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 <autoIncrementCycle>false</autoIncrementCycle>
 </Column>
@@ -26,7 +26,7 @@
 <ownerDesignName>library_design</ownerDesignName>
 <use>0</use>
 <logicalDatatype>LOGDT024</logicalDatatype>
-<domain>E0E43D2C-93ED-D83C-2C85-A8138566283C</domain>
+<domain>7D72D450-108B-AF84-94E5-1FDD3D4F9CAE</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 <autoIncrementCycle>false</autoIncrementCycle>
 </Column>
@@ -37,7 +37,7 @@
 <ownerDesignName>library_design</ownerDesignName>
 <use>0</use>
 <logicalDatatype>LOGDT024</logicalDatatype>
-<domain>49ED77EE-3768-7451-E690-10D1D023E3ED</domain>
+<domain>99D21E2D-7110-1225-7B76-D2BDDCC063AA</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 <autoIncrementCycle>false</autoIncrementCycle>
 </Column>
@@ -49,7 +49,7 @@
 <nullsAllowed>true</nullsAllowed>
 <use>0</use>
 <logicalDatatype>LOGDT024</logicalDatatype>
-<domain>49ED77EE-3768-7451-E690-10D1D023E3ED</domain>
+<domain>99D21E2D-7110-1225-7B76-D2BDDCC063AA</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 <autoIncrementCycle>false</autoIncrementCycle>
 </Column>

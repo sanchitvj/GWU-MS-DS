@@ -1,0 +1,46 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<TableProxyOraclev11g class="oracle.dbtools.crest.model.design.storage.oracle.v11g.TableProxyOraclev11g" name="Books" directorySegmentName="seg_0" id="0289D869-BE5D-38E3-1530-25031F5E4D12">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+<logging>YES</logging>
+<partitionedRowMovement>DISABLE</partitionedRowMovement>
+<temporaryChanged>false</temporaryChanged>
+<accessDriverType>oracle_loader</accessDriverType>
+<rejectLimit></rejectLimit>
+<columnProxies itemClass="oracle.dbtools.crest.model.design.storage.oracle.v12c.ColumnProxyOraclev12c">
+<ColumnProxy name="tilte" id="3294F17C-C96A-2242-FDF3-D9297F2F1A9E">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="author_last_name" id="746D7AE2-74B7-21EE-CF1C-682A76962EDA">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="book_id" id="763C4DCC-3FF6-66D0-F912-F2ED0A271776">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="author_first_name" id="A49C5CE8-AC60-5105-E1B0-872D3DF243CA">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="rating" id="F19C1CF4-302D-F629-7A78-7CAA6DE5D342">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+</columnProxies>
+<primaryKeys>
+<PrimaryKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.PKProxyOraclev10g" name="Books_PK" id="91B067EC-5012-42F0-BC4D-FD91696C5F3E">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+<indexSort>SORTED</indexSort>
+</PrimaryKey>
+</primaryKeys>
+</TableProxyOraclev11g>

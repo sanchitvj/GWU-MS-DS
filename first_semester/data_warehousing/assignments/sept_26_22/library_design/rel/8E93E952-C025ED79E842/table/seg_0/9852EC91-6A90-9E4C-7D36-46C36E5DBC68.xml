@@ -13,9 +13,9 @@
 <createdTime>2022-09-24 21:42:05 UTC</createdTime>
 <generatorID>A3BA7446-F828-972D-4674-A1967ACD1F31</generatorID>
 <ownerDesignName>library_design</ownerDesignName>
-<use>0</use>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
 <logicalDatatype>LOGDT019</logicalDatatype>
-<domain>DF45FD39-C0CF-71F6-FA1F-2363B3591052</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 <autoIncrementCycle>false</autoIncrementCycle>
 </Column>
@@ -35,9 +35,9 @@
 <createdTime>2022-09-24 21:42:05 UTC</createdTime>
 <generatorID>868AA9C6-9CA9-B52C-B57F-DB91E1AB717D</generatorID>
 <ownerDesignName>library_design</ownerDesignName>
-<use>0</use>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
 <logicalDatatype>LOGDT019</logicalDatatype>
-<domain>DF45FD39-C0CF-71F6-FA1F-2363B3591052</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 <autoIncrementCycle>false</autoIncrementCycle>
 </Column>
@@ -46,9 +46,10 @@
 <createdTime>2022-09-24 21:42:05 UTC</createdTime>
 <generatorID>3C10FC59-C26D-4495-286E-3C662A0DA95E</generatorID>
 <ownerDesignName>library_design</ownerDesignName>
+<useDomainConstraints>false</useDomainConstraints>
 <use>0</use>
 <logicalDatatype>LOGDT024</logicalDatatype>
-<domain>9ACDD0A1-98FB-5EB5-69E9-047160A8C412</domain>
+<domain>A0FC1D71-E2B7-BB36-DDE6-C1D0EA06FDD2</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 <previousColumn>false</previousColumn>
 <autoIncrementCycle>false</autoIncrementCycle>
@@ -63,7 +64,7 @@
 <ownerDesignName>library_design</ownerDesignName>
 <use>0</use>
 <logicalDatatype>LOGDT019</logicalDatatype>
-<domain>DF45FD39-C0CF-71F6-FA1F-2363B3591052</domain>
+<domain>E2ECC603-493A-C2EE-29BD-A883E3CCF3C0</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 <previousColumn>false</previousColumn>
 <autoIncrementCycle>false</autoIncrementCycle>

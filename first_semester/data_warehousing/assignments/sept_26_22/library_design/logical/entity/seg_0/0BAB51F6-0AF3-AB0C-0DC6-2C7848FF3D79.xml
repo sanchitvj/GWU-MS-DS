@@ -22,9 +22,9 @@
 <engineerTo>
 <item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
 </engineerTo>
-<use>0</use>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
 <logicalDatatype>LOGDT019</logicalDatatype>
-<domain>DF45FD39-C0CF-71F6-FA1F-2363B3591052</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 </Attribute>
 <Attribute name="transaction_date" id="E2FFEC55-9F5C-E739-F30B-59D1A1926C8E">
@@ -46,9 +46,9 @@
 <engineerTo>
 <item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
 </engineerTo>
-<use>0</use>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
 <logicalDatatype>LOGDT019</logicalDatatype>
-<domain>DF45FD39-C0CF-71F6-FA1F-2363B3591052</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 </Attribute>
 <Attribute name="book_id" id="3C10FC59-C26D-4495-286E-3C662A0DA95E">
@@ -60,9 +60,10 @@
 <item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
 </engineerTo>
 <referedAttribute>F8998085-1460-B12C-488B-99ED4B304FD5</referedAttribute>
+<useDomainConstraints>false</useDomainConstraints>
 <use>0</use>
 <logicalDatatype>LOGDT024</logicalDatatype>
-<domain>9ACDD0A1-98FB-5EB5-69E9-047160A8C412</domain>
+<domain>A0FC1D71-E2B7-BB36-DDE6-C1D0EA06FDD2</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 </Attribute>
 <Attribute name="patron_id" id="FCB51F25-3C5B-07EA-D6FB-59ABE68D3F15">
@@ -74,9 +75,10 @@
 <item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
 </engineerTo>
 <referedAttribute>02010356-92C3-F39C-2A28-362A90891A8C</referedAttribute>
+<useDomainConstraints>false</useDomainConstraints>
 <use>0</use>
 <logicalDatatype>LOGDT019</logicalDatatype>
-<domain>DF45FD39-C0CF-71F6-FA1F-2363B3591052</domain>
+<domain>E2ECC603-493A-C2EE-29BD-A883E3CCF3C0</domain>
 <ownDataTypeParameters>,,</ownDataTypeParameters>
 </Attribute>
 </attributes>
@@ -85,8 +87,9 @@
 <createdBy>sanchitvj</createdBy>
 <createdTime>2022-09-24 21:24:49 UTC</createdTime>
 <ownerDesignName>library_design</ownerDesignName>
+<shouldEngineer>false</shouldEngineer>
 <engineerTo>
-<item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="true"/>
+<item key="8E93E952-9476-FA3C-7F7B-C025ED79E842" value="false"/>
 </engineerTo>
 <pk>true</pk>
 <usedAttributes>

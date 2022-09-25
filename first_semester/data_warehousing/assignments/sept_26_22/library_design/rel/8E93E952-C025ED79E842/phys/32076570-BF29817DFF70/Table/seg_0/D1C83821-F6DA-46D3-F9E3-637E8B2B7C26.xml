@@ -1,0 +1,61 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<TableProxyOraclev11g class="oracle.dbtools.crest.model.design.storage.oracle.v11g.TableProxyOraclev11g" name="Patrons" directorySegmentName="seg_0" id="D1C83821-F6DA-46D3-F9E3-637E8B2B7C26">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+<logging>YES</logging>
+<partitionedRowMovement>DISABLE</partitionedRowMovement>
+<temporaryChanged>false</temporaryChanged>
+<accessDriverType>oracle_loader</accessDriverType>
+<rejectLimit></rejectLimit>
+<columnProxies itemClass="oracle.dbtools.crest.model.design.storage.oracle.v12c.ColumnProxyOraclev12c">
+<ColumnProxy name="location" id="17DE1C57-8B4C-94CE-D28C-DB2CFC434642">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="state" id="2A245DA8-86AC-E92B-D803-E9421B3C4A7A">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="patron_id" id="34C08859-50AD-E1C9-F2E9-708D098F0366">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="city" id="3F5962BE-4111-DDB4-0595-39D77AA854F1">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="first_name" id="45DD0920-F65A-0EA3-1FC2-4D7B75205702">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="last_name" id="5813B87C-4B11-2646-178B-13F13FD5935A">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="street_address" id="5EEC2819-5C56-39D1-7E14-AF9D63E71830">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+<ColumnProxy name="zip" id="68336F31-6836-81AA-AE7D-42418E13EF64">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+</ColumnProxy>
+</columnProxies>
+<primaryKeys>
+<PrimaryKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.PKProxyOraclev10g" name="Patrons_PK" id="59DC142A-FAD9-BA34-9459-290C39ADE424">
+<createdBy>sanchitvj</createdBy>
+<createdTime>2022-09-25 19:01:37 UTC</createdTime>
+<ownerDesignName>library_design</ownerDesignName>
+<indexSort>SORTED</indexSort>
+</PrimaryKey>
+</primaryKeys>
+</TableProxyOraclev11g>
