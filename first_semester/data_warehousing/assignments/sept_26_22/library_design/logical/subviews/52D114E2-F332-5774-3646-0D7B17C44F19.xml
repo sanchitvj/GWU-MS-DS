@@ -1,30 +1,36 @@
 <?xml version = '1.0' encoding = 'UTF-8'?>
 <Diagram class="oracle.dbtools.crest.swingui.logical.DPVLogical" name="Logical" id="52D114E2-F332-5774-3646-0D7B17C44F19">
-<createdBy>sanchitvj</createdBy>
-<modifiedBy>sanchitvj</modifiedBy>
+<createdBy>Sanchit Vijay G34607040</createdBy>
+<modifiedBy>Sanchit Vijay G34607040</modifiedBy>
 <createdTime>2022-09-24 21:15:13 UTC</createdTime>
 <autoRoute>false</autoRoute>
 <boxInbox>true</boxInbox>
-<showLegend>false</showLegend>
+<showLegend>true</showLegend>
 <showLabels>false</showLabels>
 <showRelAttributes>false</showRelAttributes>
 <gridEnabled>false</gridEnabled>
 <showGrid>false</showGrid>
 <diagramColor>-1</diagramColor>
+<legendPosX>631</legendPosX>
+<legendPosY>270</legendPosY>
 <display>false</display>
 <notation>0</notation>
 <objectViews>
 <OView class="oracle.dbtools.crest.swingui.logical.TVEntity" oid="0BAB51F6-0AF3-AB0C-0DC6-2C7848FF3D79" otype="Entity" vid="D9FCDFA3-D9BF-9B85-B761-63133DDF9ECE">
 <hideElementsInCurrentOnly>false</hideElementsInCurrentOnly>
-<bounds x="307" y="288" width="222" height="130"/>
+<bounds x="304" y="288" width="225" height="130"/>
 </OView>
 <OView class="oracle.dbtools.crest.swingui.logical.TVEntity" oid="42D9A9C8-FF90-58F6-996A-0CB9597D36F3" otype="Entity" vid="23FA0DAD-3849-3752-915B-AD8BE518675B">
 <hideElementsInCurrentOnly>false</hideElementsInCurrentOnly>
-<bounds x="474" y="70" width="185" height="151"/>
+<bounds x="474" y="70" width="198" height="151"/>
 </OView>
 <OView class="oracle.dbtools.crest.swingui.logical.TVEntity" oid="B8CD4EBC-8319-F78B-B154-CD3E973AB720" otype="Entity" vid="3F13CFA4-FDFE-E8E3-23F6-237430C87614">
 <hideElementsInCurrentOnly>false</hideElementsInCurrentOnly>
-<bounds x="153" y="83" width="200" height="136"/>
+<bounds x="153" y="83" width="212" height="136"/>
+</OView>
+<OView class="oracle.dbtools.crest.swingui.TVLegend" oid="E139C291-653A-7EFF-0B4C-B81D74DFC79D" otype="Legend" vid="05C99CAE-9E76-E9B3-4B35-6084BBBA2E4F">
+<hideElementsInCurrentOnly>false</hideElementsInCurrentOnly>
+<bounds x="631" y="270" width="226" height="128"/>
 </OView>
 </objectViews>
 <connectors>
@@ -42,8 +48,8 @@
 <backgroundColor>-16777216</backgroundColor>
 <lineWidth>1</lineWidth>
 <points>
-<point x="330" y="219"/>
-<point x="330" y="288"/>
+<point x="334" y="219"/>
+<point x="334" y="288"/>
 </points>
 </Connector>
 </connectors>
