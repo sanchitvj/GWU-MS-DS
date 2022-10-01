@@ -1,6 +1,6 @@
 ---
 title: "R Assignment - Estimation and CIs"
-author: "Edwin Lo, GWU Intro to Data Science DATS 6101"
+author: "Sanchit Vijay"
 # date: "today"
 date: "`r Sys.Date()`"
 output:
@@ -44,7 +44,12 @@ The variables in the dataset are:
 **After importing the dataset, check the structure. Make sure `admit` and `rank` are stored as factors, instead of numeric or integers. (Hint: Use as.factor() function or factor() function).**
 ```{r, results='markup'}
 admissions = data.frame(read.csv("LogRegAdmit.csv"))
-# structure(admissions)
+admissions$admit = as.factor(admissions$admit)
+admissions$rank = as.factor(admissions$rank)
+head(admissions)
+cat("Datatype of admit: ", class(admissions$admit))
+cat("\n")
+cat("Datatype of rank: ", class(admissions$rank))
 ```
 
 'admit' and 'rank' attributes are stored as factors.  
@@ -98,9 +103,9 @@ Intervals don't overlap between admitted and rejected region for both 0.80 and 0
 ### Question 6   
 **Repeat Question 4 for `gpa`. Make (box-) plots showing the gpa distribution among applicants from different school rankings for the admitted and rejected separately. Again, use ggplot.**
 ```{r, results='markup'}
-ggplot(gpa_subset_adm, aes(x = rank, y = gpa)) + geom_point(color = "blue") + labs(title = "GPA vs. school rank distribution of admitted applicants", x = "School ranking", y = "GPA")
+ggplot(gpa_subset_adm, aes(x = rank, y = gpa)) + geom_point(color = "cyan") + labs(title = "GPA vs. school rank distribution of admitted applicants", x = "School ranking", y = "GPA")
 
-ggplot(gpa_subset_rej, aes(x = rank, y = gpa)) + geom_point(color = "pink") + labs(title = "GPA vs. school rank distribution of rejected applicants", x = "School ranking", y = "GPA")
+ggplot(gpa_subset_rej, aes(x = rank, y = gpa)) + geom_point(color = "green") + labs(title = "GPA vs. school rank distribution of rejected applicants", x = "School ranking", y = "GPA")
 ```
 
 ### Question 7  

@@ -71,7 +71,8 @@ pizza = data.frame(read.csv("Pizza.csv"))
 **How many data points are there?**  
 You can use the `length()` or `nrow()` or `dim()` function.  
 ```{r Q2, include=T}
-dim(pizza)
+n <-  nrow(pizza)
+cat("Number of data points: ", n)
 ```
 
 ### Question 3  
@@ -125,9 +126,9 @@ ggplot(pizza, aes(x = brand, y = sodium)) + geom_boxplot(outlier.colour = 'red',
 **Outliers**  
 Use the `ezids::outlierKD2()` function to remove the outliers for `sodium`, then run the function again to remove outliers on `cal`. Re-do the QQ-plots for these two variables. Do you see much improvements?  
 ```{r, results="markup"}
-sodium_outliers_removed = outlierKD2(pizza, var = sodium, rm = TRUE, boxplt = TRUE, qqplt = TRUE, )
+sodium_outliers_removed <-  outlierKD2(pizza, var = sodium, rm = TRUE, boxplt = FALSE, qqplt = TRUE)
 
-calories_outliers_removed = outlierKD2(sodium_outliers_removed, var = sodium, rm = TRUE, boxplt = TRUE, qqplt = TRUE, )
+calories_outliers_removed = outlierKD2(sodium_outliers_removed, var = cal, rm = TRUE, qqplt = TRUE)
 
 ```
 There is significant improvement.
