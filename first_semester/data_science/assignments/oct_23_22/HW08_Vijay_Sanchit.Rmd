@@ -1,0 +1,148 @@
+---
+title: "Intro to DS - LM part II factor regressors"
+author: "GWU Intro to Data Science DATS 6101"
+# date: "today"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: false
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r init, include=FALSE}
+# some of common options (and the defaults) are: 
+# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
+library(ezids)
+# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+options(scientific=T, digits = 3) 
+# options(scipen=9, digits = 3) 
+# ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
+# use scipen=999 to prevent scientific notation at all times
+```
+
+# HW 8: Linear models - Categorical Regressors 
+
+Let us re-analyze the problem we had from last time, but include categorical regressors. First, 
+import the data, and change those appropriate ones to factors.
+
+```{r, results='markup'}
+# bikeorig = data.frame(read.csv("bikedata.csv"))
+bikeorig = api_rfit("BikeShare")
+# bike = subset(bikeorig, select = -c(Date, Casual.Users, Registered.Users)) # remove irrelevant columns
+bike = subset(bikeorig, select = -c(Date, Casual_Users, Registered_Users)) # remove irrelevant columns
+colnames(bike)[4:11] = c("Day","Workday","Weather","TempF","TempFF","Humidity","Wind","Tusers") # rename some columns
+bike16 = subset(bike, bike$Hour == 16) # with only Hour-16 data. All columns are numerical
+nrow(bike16)
+bike16$Hour = NULL # Hour has only one value '16' now. No need to keep this column.
+bike16$TempFF = NULL # TempFF is highly correlated with TempF. Drop one. 
+bike_final = bike16
+bike_final$Season = factor(bike16$Season)
+bike_final$Holiday = factor(bike16$Holiday)
+bike_final$Day = factor(bike16$Day)
+bike_final$Workday = factor(bike16$Workday)
+bike_final$Weather = factor(bike16$Weather)
+str(bike_final) # Same as bike16 except some columns are now factor level.
+```
+
+### Question 0  
+**Pearson vs Spearman**  
+Read the article here:  
+Hauke,J. & Kossowski,T.(2011). [Comparison of Values of Pearson's and Spearman's 
+Correlation Coefficients on the Same Sets of Data. 
+Quaestiones Geographicae, 30(2) 87-93](https://doi.org/10.2478/v10117-011-0021-1).  
+Simply indicate you have read it.
+```{r, results='markup'}
+# bike16
+```
+
+### Question 1  
+**Compare the correlation matrix for all variables in `bike16` (where qualitative variables are not defined as factors) using the Pearson vs. using the Spearman methods**  
+Look at the correlation matrices for all the variables (quantitative and qualitative) using the two methods. Compare and comment on their differences.
+```{r, results='markup'}
+# cor.test(as.numeric(bike16), method="pearson")
+cor(bike16, method = "pearson")
+```
+
+```{r, results='markup'}
+cor(bike16, method = "spearman")
+```
+
+From above two matrices we can observe that there is a difference in correlation values. The correlation of quantitative variables is significantly changed from Pearson to Spearman. For categorical variables it is slightly changed.
+
+### Question 2    
+**Build a baseline linear model using the `bike_final` data to predict for `Total Users`, with one numerical predictor.  Write down the regression equation (see note below) Interpret the estimated coefficients, their p-values, and the multiple R-squared value.**  
+Note: The regression model equation will look something like  `Total users` = 0.28 + 5.29 `Temperature F`, just as an example.
+```{r, results='markup'}
+model1 = lm(Tusers ~ TempF, data = bike_final)
+summary(model1)
+# xkabledply(model1, title = paste("Model (num):" ))
+cat("Regression equation is:\n", format("Total users = "), format(model1$coefficients["(Intercept)"]), "+", format(model1$coefficients["TempF"]), "Temparature F")
+```
+
+
+The p-value is less than 0.05 so we will reject the null hypothesis. The multiple R2 value for the model is 0.304, which is not satisfactory.  
+
+### Question 3    
+**Build a linear model using the `bike_final` data to predict `Total Users`, with `Temperature F` and a categorical predictor with at least 3 levels.  You will use `bike_final` for the linear models fit in the rest of this homework assignment.**
+Use the correlation matrix as a guide to decide on which variables to use. 
+Find and interpret the results. Also write down the model equation for the different 
+categorical factor levels on separate lines.
+```{r, results='markup'}
+model2 = lm(Tusers ~ TempF + Season, data = bike_final)
+summary(model2)
+
+cat("Regression equation is:\n", format("Total users = "), format(model2$coefficients["(Intercept)"]), "+", format(model2$coefficients["TempF"]), "Temparature F", format(model2$coefficients["Season2"]), "Season2", "+", format(model2$coefficients["Season3"]), "Season3", format(model2$coefficients["Season4"]), "Season4")
+```
+
+
+### Question 4  
+**Next extend the previous model for `Total users`, but include the interaction term between the numerical and categorical variable.**  
+Again, write down the model equation for different categorical factor levels on separate lines. Comment of the slope and coefficients. 
+Please see the following link for more details on interactions: https://online.stat.psu.edu/stat501/lesson/8/8.6.
+```{r, results='markup'}
+model3 = lm(Tusers ~ TempF * Season, data = bike_final)
+summary(model3)
+```
+
+
+### Question 5  
+**Let us now fit the linear model `Total Users ~ Temperature F + Season + Wind:Weather + Season:Weather`.**  
+Notice the presence/absence of coefficients for the base-level categories. 
+No need to write down the model equations this time. But comment on what is the different 
+between how the base-level is handled here and in the previous models. 
+```{r, results='markup'}
+model4 = lm(Tusers ~ TempF + Season + Wind * Weather + Season * Weather, data = bike_final)
+summary(model4)
+```
+
+This has Null values in it.  
+
+### Question 6  
+**Compare the models from Q2, Q3, Q4 and Q5 using ANOVA**  
+Interpret and comment on your results. Which model would you use and why?
+```{r ,results='markup'}
+anova(model1, model2, model3, model4)
+```
+We will use model4 as its RSS value is lowest and p value is less than 0.05.  
+
+
+### Question 7   
+**Try build a model with three categorical variables only, and their interaction terms.**  
+What are we really getting when only categorical variables (i.e. no quantitative variables) are used as regressors?  Describe and explain.  
+```{r, results='markup'}
+model5 = lm(Tusers ~  Season + Workday + Weather + Season*Workday + Workday*Weather + Weather*Season, data = bike_final)
+summary(model5)
+```
+
+
+
+
+
+
