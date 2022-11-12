@@ -52,7 +52,7 @@ The questions listed here are the basic guidelines, not the only goal, in this h
 Import the dataset into R, and call it `titanic_orig`, and explore it little to get the overall picture of the dataset.  Eventually we would like to see what affected `survival` in the tragedy. 
 ```{r, results='markup'}
 titanic_orig = data.frame(read.csv("Titanic.csv"))
-titanic_orig
+# titanic_orig
 ```
 
 
@@ -62,7 +62,7 @@ One of the independent variables we will use to model `survival` is `age`. How m
 ```{r, results='markup'}
 cat("Missing values in 'age' column are: ", sum(is.na(titanic_orig$age)))
 titanic_orig = subset(titanic_orig, !is.na(age))
-titanic_orig
+# titanic_orig.head()
 ```
 
 
@@ -85,12 +85,18 @@ titanic_orig$pclass = factor(titanic_orig$pclass)
 Before using our newly learned technique of logistic regression, let’s go old school, and use some prior knowledge to try find an answer. Does the data support that `age` affects `survival`?
 ```{r, results='markup'}
 # age_contable = xtabs(~ survived + age, data = titanic_orig)
-age_contable = table(titanic_orig$survived, titanic_orig$age)
+# age_contable = table(titanic_orig$survived, titanic_orig$age)
 # age_contable
 
-chisq.test(age_contable)
+# chisq.test(age_contable)
+# t.test(titanic_orig$age, titanic_orig$survived)
+t.test(age ~ survived, data=titanic_orig)
+
+library(ggplot2)
+ggplot(titanic_orig, aes(x=age, y=survived)) + geom_boxplot(fill="pink")
+
 ```
-Above Chi-Square test has p-value of 0.1 (>0.05) so we will reject the null hypothesis (H0) and support that survival is not affected by age.  
+Above Chi-Square test has p-value of 0.04 (<0.05) so we can reject the null hypothesis (H0) and support that survival is affected by age.  
 
 ### Question 5  
 **Survival and gender**  
@@ -101,7 +107,7 @@ sex_contable
 
 chisq.test(sex_contable)
 ```
-Above Chi-Square test has p-value of <0.05 so we cannot reject the null hypothesis (H0). So, survival is not independent of sex data.  
+Above Chi-Square test has p-value of <0.05 so we will reject the null hypothesis (H0). So, survival is not independent of sex data.  
 
 ### Question 6   
 **Survival and pclass**  
@@ -119,16 +125,76 @@ Above Chi-Square test has p-value of <0.05 so we cannot reject the null hypothes
 ### Question 7   
 **Survival and age + pclass**  
 Now let us build a logit model with `age + pclass` as predictors, and analyze the results. Is the model a good one? Support your answer with appropriate model evaluation(s).  Comment on statistical significant of coefficients, accuracy/confusion matrix, McFadden's value, ROC/AUC, ... 
+```{r, results='markup'}
+model1 = glm(survived ~ age + pclass, family = "binomial", data = titanic_orig)
+summary(model1)
+```
 
+All the coefficients are statistically significant; p-values < 0.05. Age is having small effect on survival as we saw from above Chi-Square test and pclass is strongly negatively affecting the prediction. Results are reasonable and aligning with our inferences above. 
+
+```{r, results='markup'}
+loadPkg("ModelMetrics")
+# confusionMatrix(admitLogit)
+xkabledply(confusionMatrix(actual=model1$y, predicted=model1$fitted.values), title = "Confusion matrix from Logit Model" )
+```
+Above confusion matrix gives accuracy of `r format((344 + 152) / (344 + 152 + 80 + 138))`, which is low.  
+
+```{r, results='markup'}
+loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+prob=predict(model1, type = "response" )
+titanic_orig$prob=prob
+h <- roc(survived~prob, data=titanic_orig)
+auc(h) # area-under-curve prefer 0.8 or higher.
+plot(h)
+```
+We are getting ROC-AUC score of `r format(auc(h))`, which is less than 0.8. The above model is not a good fit.  
+
+```{r, results='markup'}
+library(pscl)
+pR2(model1)
+```
+McFadden's value for above model is `r format(pR2(model1)["McFadden"])`. So predictors used (age and pclass) are only explaining 14% of variance, which is low.
+
+Evaluation of model using confusion metrics, accuracy score, ROC/AUC score, and McFadden's Value tells that above model is not a good fit and predictors used are not enough to explain the variance.
 
 ### Question 8  
 **More features**  
 Can we improve the model? Let us also throw in `sex` as a predictor. How’s the model now?  Comment on deviance tests for model comparions, statistical significant of coefficients, accuracy/confusion matrix, McFadden's value, ROC/AUC, ... 
+```{r, results='markup'}
+model2 = glm(survived ~ age + pclass + sex, family = "binomial", data = titanic_orig)
+summary(model2)
 
+xkabledply(confusionMatrix(actual=model2$y, predicted=model2$fitted.values), title = "Confusion matrix from Logit Model")
+
+prob=predict(model2, type = "response" )
+titanic_orig$prob=prob
+h <- roc(survived~prob, data=titanic_orig)
+auc(h) # area-under-curve prefer 0.8 or higher.
+plot(h)
+
+pR2(model2)
+```
+For this model also all the coefficients are statistically significant; p-values < 0.05. Age is having slight effect on survival as we saw from above Chi-Square test and pclass as well as sex is strongly negatively affecting the prediction. Results are reasonable and aligning with our inferences above.  
+Confusion matrix gives accuracy of `r format((356 + 207) / (356 + 207 + 83 + 68))`, which is better than first model.  
+We are getting ROC-AUC score of `r format(auc(h))`, which is more than 0.8. This model is a good fit. Also curve is shifted towards top left corner that makes sure our model is improved.  
+McFadden's value for above model is `r format(pR2(model2)["McFadden"])`. So predictors (age, pclass, and sex) used are explaining approx. 33% of variance, which is improved from previous model.  
+
+Evaluation of model using confusion metrics, accuracy score, ROC/AUC score, and McFadden's Value tells that above model is a good fit and predictors used are improving the variance.  
 
 ### Question 9  
 **Sample Predictions**  
 According to the last model, what is the probability of survival for a female, age 10, second class passenger? And a male, age 20, first class passenger?
+```{r, results='markup'}
+
+titanic_samp_1 <- with(titanic_orig, data.frame(sex="female", age = 10, pclass= "2"))
+titanic_samp_1$Survivalp <- predict(model2, newdata = titanic_samp_1, type = "response")
+titanic_samp_1
+# newdata1 <- data.frame(sex = "female", age = 10, pclass = 2) # new data frame with 1 row
+# predict(model2, newdata = newdata1)
+titanic_samp_2 <- with(titanic_orig, data.frame(sex="male", age = 20, pclass= "1"))
+titanic_samp_2$Survivalp <- predict(model2, newdata = titanic_samp_2, type = "response")
+titanic_samp_2
+```
 
 
 ## Interpretation  
@@ -136,4 +202,4 @@ According to the last model, what is the probability of survival for a female, a
 ### Question 10  
 **Summary**  
 With all the results you obtained above, how would you present a high-level summary of the findings? Are the results surprising or expected? 
-
+We discovered that Sex ('sex'), Age ('age'), and the class of the passenger seat ('pclass') all affect the passenger's likelihood of survival ('survived'). This is true not only of the Titanic, but of every catastrophe. Women and children are always prioritized when it comes to rescue passengers. Then there are some who can afford to upgrade to higher passenger classes. Adult males who are "poor" are given the least priority. As a result, the outcomes of this analysis were as predicted.
