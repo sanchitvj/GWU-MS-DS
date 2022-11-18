@@ -1,0 +1,207 @@
+---
+title: "Intro to DS - KNN Classifiers: PIMA dataset"
+author: "GWU Intro to Data Science DATS 6101"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: false
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r include=FALSE}
+# The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
+# Some of the frequently used functions are loadPkg(), xkabledply(), xkablesummary(), uzscale(), etc.
+library(ezids)
+ 
+# some of common options (and the defaults) are: 
+# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
+# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+options(scientific=T, digits = 3) 
+# options(scipen=9, digits = 3) 
+# ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
+# use scipen=999 to prevent scientific notation at all times
+```
+
+# HW Assignment - KNN
+
+This exercise uses the Pima.te and Pima.tr dataset from the MASS package, which includes measurement on a population of women of Pima Indian heritage living near Phoenix, Arizona. The women were tested for diabetes according to World Health Organization criteria.  We are interested in predicting diabetes status as a function of the other variables.
+
+The variables in the dataset are:
+
+* `npreg` : number of pregnancies.
+* `glu` : plasma glucose concentration
+* `bp` : diastolic blood pressure (mm Hg) skin triceps skinfold thickness (mm)
+* `bmi` : body mass index
+* `ped` : diabetes pedigree function
+* `age` : age in years
+* `type` : Yes or No: diabetic by WHO criteria  
+
+
+## Pima Dataset  
+
+### Question 1  
+**Obtain the dataset**  
+In the `MASS` library, combine the two datasets `Pima.te` and `Pima.tr` back into one complete dataset, call it `pima`. (Try function `rbind()`.) How many observations are there?  
+```{r, results='markup'}
+loadPkg("MASS")
+
+pima = rbind(Pima.te, Pima.tr)
+nrow(pima)
+```
+There are `r format(nrow(pima))` observations in pima dataset combined.
+
+### Question 2  
+**Summary**  
+Obtain some basic summary statistics for the full dataset `pima`.
+```{r, results='markup'}
+summary(pima)
+```
+
+
+### Question 3  
+**Pairs**  
+Another quick EDA to perform, you can plot the `pairs()`. The plot function can handle both numerical and categorical variable type. After trying the function in the R base library, also try the modified version with `pairs.panels()`. Comment on interesting relationships.  
+
+```{r, results='markup', fig.align="center", fig.width = 10, fig.height=5}
+## Example of pairs.panel on the iris data set -- edit for your analysis of the pima data ##
+loadPkg("psych")
+pairs.panels(pima[,-5], 
+             method = "pearson", # correlation method
+             hist.col = "#00AFBB", # set histogram color, can use "#22AFBB", "red",
+             density = TRUE,  # show density plots
+             ellipses = TRUE # show correlation ellipses
+             )
+unloadPkg("psych")
+```
+```{r, results='markup', fig.align="center", fig.width = 10, fig.height=5}
+pairs(pima)
+```
+bp attribute shows normal distribution and glu column shows significant correlation (0.5) with type (response).
+
+## KNN  
+
+### Question 4  
+**Train-Test split 3:1**  
+First, standardize all of the X variables (i.e. all by `type`).  Now, in order to perform KNN analysis, we need to separate the X variables and the y variable `type`.  Before we separate them out, create a vector/array of 1s and 2s to create a train-test split in the ratio of 3:1 (i.e. 75% training, 25% test). Make sure to set a constant seed value (e.g. using `set.seed`) so that you can duplicate the results.  You should end up with a dataframe of Xs for training with the corresponding vector of y, and a dataframe of Xs for testing with the corresponding vector of y.  Make sure the order of observations in train-X and train-y are not mixed up during the process. Same for test-X and test-y.  
+```{r, results='markup'}
+
+std_pima <- as.data.frame(scale(pima[1:7], center = TRUE, scale = TRUE))
+
+set.seed(876)
+pima_sample <- sample(2, nrow(std_pima), replace=TRUE, prob=c(0.75, 0.25))
+
+pima_train_X <- std_pima[pima_sample==1, 1:7]
+pima_test_X <- std_pima[pima_sample==2, 1:7]
+
+pima_train_Y <- pima[pima_sample==1, 8]
+pima_test_Y <- pima[pima_sample==2, 8]
+
+```
+
+```{r}
+table(pima_sample)
+```
+
+### Question 5  
+**KNN results**  
+Perform the KNN analysis, with different k values. You do not need to show all the results from different k, but please include the one with the best (total) accuracy in your submission. How does the accuracy compared to the percentages of being T/F in the dataset?  
+```{r, results='markup'}
+loadPkg("FNN")
+loadPkg("caret")
+loadPkg("gmodels")
+
+ResultDf = data.frame( k=numeric(0), Total.Accuracy= numeric(0), row.names = NULL )
+
+for (kval in 3:15) {
+  pima_pred <- knn(train = pima_train_X, test = pima_test_X, cl=pima_train_Y, k=kval)
+  PIMAPREDCross <- CrossTable(pima_test_Y, pima_pred, prop.chisq = FALSE)
+  # print( paste("k = ", kval) )
+  # PIMAPREDCross
+  # 
+  cm = confusionMatrix(pima_pred, reference = pima_test_Y ) # from caret library
+  # print.confusionMatrix(cm)
+  # 
+  cmaccu = cm$overall['Accuracy']
+  print( paste("Total Accuracy = ", cmaccu ) )
+  # print("Other metrics : ")
+  # print(cm$byClass)
+  # 
+  cmt = data.frame(k=kval, Total.Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
+  # cmt = cbind( cmt, data.frame( t(cm$byClass) ) ) # the dataframe of the transpose, with k valued added in front
+  ResultDf = rbind(ResultDf, cmt)
+  # print( xkabledply(   as.matrix(cm), title = paste("ConfusionMatrix for k = ",kval ) ) )
+  # print( xkabledply(data.frame(cm$byClass), title=paste("k = ",kval)) )
+}
+
+xkabledply(ResultDf, "Total Accuracy Summary")
+
+```
+
+```{r, results='markup'}
+pima_table <- table(pima$type)
+pima_table
+t_f_percent <- pima_table[2] / sum(pima_table)
+t_f_percent
+```
+
+KNN accuracy (0.74) is much better than T/F percentage.
+
+## Logistic Regression and comparison  
+
+### Question 6   
+**Logistic Regression results**  
+Compare to the best logistic regression you can get. (Use the full model with all variables, since that is what we have for KNN.) How is the accuracy (assumes the standard cutoff of 0.5) compared to KNN?  
+```{r, results='markup'}
+# model_logreg = glm(type ~ npreg + glu + bmi + ped, family = "binomial", data = pima)
+model_logreg = glm(type ~ ., family = "binomial", data = pima)
+summary(model_logreg)
+```
+
+```{r, results='markup'}
+unloadPkg("caret")
+loadPkg("ModelMetrics")
+
+# pred_probs = predict(model_logreg, pima_test_X, type = "response")
+# pred = ifelse(pred_probs > 0.5, "1", "0")
+
+cm = confusionMatrix(actual=model_logreg$y, predicted=model_logreg$fitted.values) # from caret library
+# cm = confusionMatrix(pred, as.factor(pima_test_Y))
+
+accuracy = (cm[1,1] + cm[2,2]) / (cm[1,1] + cm[2,2] + cm[1,2] + cm[2,1])
+print(paste("Total Accuracy = ", accuracy))
+```
+
+Accuracy is slightly better in case of logistic regression as compared to KNN.  
+
+### Question 7  
+**ROC-AUC**  
+What is the AUC for the logit model?  Plot the ROC.  We should be able to compute the ROC and AUC for the KNN model the same way. Can you compare them?   
+```{r, results='markup'}
+
+loadPkg("pROC") 
+
+# prob=predict(model_logreg, type = "response")
+knn_pred = knn(train = pima_train_X, test = pima_test_X, cl=pima_train_Y, k=14, prob=TRUE)
+# knn_pred = predict(model_logreg, type = "response")
+
+
+h <- roc(pima_test_Y ~ attributes(knn_pred)$prob)
+auc(h) # area-under-curve prefer 0.8 or higher.
+plot(h)
+
+
+prob = predict(model_logreg, type = "response")
+pima$prob=prob
+h <- roc(type~prob, data=pima)
+auc(h) # area-under-curve prefer 0.8 or higher.
+plot(h)
+```
+KNN looks over sensitivity and favors specificity. Logisitic model is producing better and stable model as comapred to KNN.  
+ROC AUC score of logistic is better than for KNN.
