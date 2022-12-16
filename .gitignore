@@ -139,3 +139,4 @@ dmypy.json
 **.zip
 **.DS_Store
 **.Rhistory
+**scikit-fda
