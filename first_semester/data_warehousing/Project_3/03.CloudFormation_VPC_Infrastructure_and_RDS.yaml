@@ -1,0 +1,531 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Template that creates a VPC with DNS and public IPs enabled, an Oracle RDS instance, and a Postgres RDS instance.
+
+# This template creates:
+#   VPC
+#   Internet Gateway
+#   Public Route Table
+#   2 Public and 2 Private Subnets
+#   Internet Gateway
+#   Route tables, route, and associations
+#   A security group with inbound rules
+#   2 database subnet groups
+#   1 Oracle RDS instance and 1 Postgres RDS instance
+
+######################
+# Parameters section
+# This section contains a list of parameters that are used in the resources. Some of them contain default value, while others do not.
+# These parameters can be set or overriden during the stack creation process on the AWS CloudFormation management console.
+######################
+
+Parameters:
+  NamePrefix: # Users can enter their initials during stack creation
+    Default: RF
+    Description: The abbreviate user name to be used as a prefix for resource names
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  OracleDBName: # Initial database name for the Oracle instance
+    Default: db1
+    Description: The database name
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  OracleDBUser: # Initial database user for the Oracle instance
+    Description: The database admin account username
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+    Default: 'oracleuser'
+  OracleDBPassword: # Initial user password for the Oracle instance
+    NoEcho: 'true'
+    Description: The database admin account password
+    Type: String
+    MinLength: '8'
+    MaxLength: '41'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters.
+  PostgresDBName: # Initial database name for the PostgreSQL instance
+    Default: db1
+    Description: The database name
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  PostgresDBUser: # Initial database user for the PostgreSQL instance
+    Description: The database admin account username
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+    Default: 'postgresuser'
+  PostgresDBPassword: # Initial user password for the PostgreSQL instance
+    NoEcho: 'true'
+    Description: The database admin account password
+    Type: String
+    MinLength: '8'
+    MaxLength: '41'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters.
+
+######################
+# Resources section
+# This section contains the AWS resources that will be created by CloudFormation.
+######################
+
+Resources:
+  ## Key pair - Key pair for the EC2 instances
+
+  KeyName:
+    Type: 'AWS::EC2::KeyPair'
+    Properties:
+      KeyName: EC2Key
+
+  ## VPC - We first create a VPC with CIDR block 10.0.0.0/16, and give it a name
+
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock: 10.0.0.0/16
+      Tags:
+        - Key: Name
+          Value: !Sub ${NamePrefix}-VPC1
+  
+  ## Public Subnets - We create 2 public subnets with CIDR blocks 10.0.1.0/24 and 10.0.3.0/24 in 2 availability zones.
+  
+  AppTierPubSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC # Reference to the VPC
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: us-east-1a # Note the different availability zones in the subnets
+      Tags:
+        - Key: Name
+          Value: !Sub ${NamePrefix}-VPC1-AppPublicSubn1 # This is replacing the NamePrefix variable with the value input by the user (or the default)
+  DBTierPubSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC # Reference to the VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: us-east-1a # Note the different availability zones in the subnets
+      Tags:
+        - Key: Name
+          Value: !Sub ${NamePrefix}-VPC1-DBPublicSubn1 
+  AppTierPubSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC # Reference to the VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: us-east-1b # Note the different availability zones in the subnets
+      Tags:
+        - Key: Name
+          Value: !Sub ${NamePrefix}-VPC1-AppPublicSubn2 
+  DBTierPubSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC # Reference to the VPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: us-east-1b # Note the different availability zones in the subnets
+      Tags:
+        - Key: Name
+          Value: !Sub ${NamePrefix}-VPC1-DBPublicSubn2 
+  
+  ## Internet Gateway - Set up the internet gateway to allow communication between the VPC and the internet.
+
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub igw-${NamePrefix}-VPC1
+  AttachGateway: # Attach the gateway to the VPC
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  
+  ## Elastic Load Balancer
+  ElasticLoadBalancerPostgres:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    DependsOn: AttachGateway
+    Properties:
+      Subnets: [!Ref 'AppTierPubSubnet1', !Ref 'AppTierPubSubnet2']
+      SecurityGroups: [!Ref 'InstanceSecurityGroup']
+      CrossZone: 'true'
+      Listeners:
+      - LoadBalancerPort: '80'
+        InstancePort: '80'
+        Protocol: HTTP
+      HealthCheck:
+        Target: HTTP:80/
+        HealthyThreshold: '3'
+        UnhealthyThreshold: '5'
+        Interval: '30'
+        Timeout: '5'
+  ElasticLoadBalancerOracle:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    DependsOn: AttachGateway
+    Properties:
+      Subnets: [!Ref 'AppTierPubSubnet1', !Ref 'AppTierPubSubnet2']
+      SecurityGroups: [!Ref 'InstanceSecurityGroup']
+      CrossZone: 'true'
+      Listeners:
+      - LoadBalancerPort: '80'
+        InstancePort: '80'
+        Protocol: HTTP
+      HealthCheck:
+        Target: HTTP:80/
+        HealthyThreshold: '3'
+        UnhealthyThreshold: '5'
+        Interval: '30'
+        Timeout: '5'
+
+  ## Route Tables - Create route tables with rules to route traffic through the VPC.
+
+  RouteTable1: # Main route table
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${NamePrefix}-VPC1-Main-RTB
+  RouteTable2: # This route table is associated with the Internet Gateway
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${NamePrefix}-VPC1-IGW-RTB
+
+  ## Route and Route Table Associations
+  Route: # This adds a route on route table 2 to the internet gateway
+    Type: 'AWS::EC2::Route'
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref RouteTable2
+      DestinationCidrBlock: 0.0.0.0/0 # Set destination to anywhere (i.e., the internet)
+      GatewayId: !Ref InternetGateway
+  # Associate subnets to the route table which is now routed to the internet gateway
+  SubnetRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref AppTierPubSubnet1
+      RouteTableId: !Ref RouteTable2
+  SubnetRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref AppTierPubSubnet2
+      RouteTableId: !Ref RouteTable2
+  SubnetRouteTableAssociation3:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref DBTierPubSubnet1
+      RouteTableId: !Ref RouteTable2
+  SubnetRouteTableAssociation4:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref DBTierPubSubnet2
+      RouteTableId: !Ref RouteTable2
+
+  ## Security Groups - Create a security group and set up inbound rules to allow connections from anywhere on certain ports.
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ${NamePrefix}-VPC1-GENERIC-SG
+      VpcId: !Ref VPC
+      SecurityGroupIngress: # These are the inbound rules.
+        - IpProtocol: tcp
+          FromPort: 1433 # MSSQL
+          ToPort: 1433
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80 # HTTP
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5432 # Postgres
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 53 # DNS
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 389 # LDAP
+          ToPort: 389
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3389 # RDP
+          ToPort: 3389
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443 # HTTPS
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 2049 # NFS
+          ToPort: 2049
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5439 # Redshift
+          ToPort: 5439
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 1521 # Oracle
+          ToPort: 1521
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22 # SSH
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3306 # MySQL
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${NamePrefix}-VPC1-GENERIC-SG
+
+  ## Subnet Groups - Here we create DB subnet groups for the databases: one group for the public subnets and one group for the private subnets.
+
+  PublicDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Databases
+      SubnetIds:
+        - !Ref DBTierPubSubnet1
+        - !Ref DBTierPubSubnet2
+      Tags:
+        - Key: Name
+          Value: Public-DB-Subnet-Group
+
+  ## Oracle RDS - Create an Oracle RDS database.
+  OraclePrimaryDB:
+    Type: AWS::RDS::DBInstance
+    DependsOn: AttachGateway
+    Properties:
+      VPCSecurityGroups:
+        - Ref: InstanceSecurityGroup # Associate it with the security group with inbound rules to allow communication from outside the VPC.
+      DBSubnetGroupName: !Ref PublicDBSubnetGroup # Associate it with the public subnet group.
+      AllocatedStorage: '20'
+      DBInstanceClass: db.t3.medium
+      Engine: oracle-ee # Database type
+      DBName: !Ref OracleDBName # Initial database name
+      LicenseModel: bring-your-own-license # Oracle license
+      MasterUsername: !Ref OracleDBUser # Initial database user
+      MasterUserPassword: !Ref OracleDBPassword # Initial database user's password
+      PubliclyAccessible: true # Need to enable this to be able to connect from a local computer.
+      AvailabilityZone: us-east-1a
+      Tags:
+        - Key: Name
+          Value: !Sub ${NamePrefix}-Oracle-Primary-DB
+    DeletionPolicy: Delete # We won't store backups
+  OracleStandbyDB:
+    Type: AWS::RDS::DBInstance
+    DependsOn: AttachGateway
+    Properties:
+      VPCSecurityGroups:
+        - Ref: InstanceSecurityGroup
+      SourceDBInstanceIdentifier: !Ref 'OraclePrimaryDB'
+      DBInstanceClass: db.t3.medium
+      PubliclyAccessible: true
+      AvailabilityZone: us-east-1b
+      ReplicaMode: open-read-only
+      Tags:
+      - Key: Name
+        Value: !Sub ${NamePrefix}-Oracle-Standby-DB
+    DeletionPolicy: Delete
+
+# PostgreSQL RDS - Similar configuration to the Oracle RDS.
+  PostgresPrimaryDB:
+    Type: AWS::RDS::DBInstance
+    DependsOn: AttachGateway
+    Properties:
+      VPCSecurityGroups:
+        - Ref: InstanceSecurityGroup
+      DBSubnetGroupName: !Ref PublicDBSubnetGroup
+      AllocatedStorage: '20'
+      DBInstanceClass: db.t3.small
+      Engine: postgres
+      DBName: !Ref PostgresDBName
+      MasterUsername: !Ref PostgresDBUser
+      MasterUserPassword: !Ref PostgresDBPassword
+      PubliclyAccessible: true
+      AvailabilityZone: us-east-1a
+      Tags:
+        - Key: Name
+          Value: !Sub ${NamePrefix}-Postgres-Primary-DB
+    DeletionPolicy: Delete
+  PostgresStandbyDB:
+    Type: AWS::RDS::DBInstance
+    DependsOn: AttachGateway
+    Properties:
+      VPCSecurityGroups:
+        - Ref: InstanceSecurityGroup
+      SourceDBInstanceIdentifier: !Ref 'PostgresPrimaryDB'
+      DBInstanceClass: db.t3.small
+      PubliclyAccessible: true
+      AvailabilityZone: us-east-1b
+      Tags:
+      - Key: Name
+        Value: !Sub ${NamePrefix}-Postgres-Standby-DB
+    DeletionPolicy: Delete
+
+  ## EC2 Autoscaling Groups - Create autoscaling EC2 instances for Postgres and Oracle applications.
+  LaunchTemplate:
+    Type: 'AWS::EC2::LaunchTemplate'
+    Properties:
+      LaunchTemplateName: !Sub '${AWS::StackName}-auto-scaling-launch-template'
+      LaunchTemplateData:
+        NetworkInterfaces:
+          - DeviceIndex: 0
+            AssociatePublicIpAddress: true
+            Groups:
+              - !Ref InstanceSecurityGroup
+            DeleteOnTermination: true
+        Placement:
+          Tenancy: default
+        ImageId: ami-0b0dcb5067f052a63
+        KeyName: !Ref KeyName
+        InstanceType: t2.micro
+        UserData:
+          Fn::Base64:
+            !Sub |
+              #!/bin/bash
+              yum update -y
+              yum install httpd -y
+              yum install postgresql -y
+              systemctl start httpd
+              systemctl enable httpd
+              echo "Hello World from $(hostname -f)" > /var/www/html/index.html
+
+  AutoScalingGroupPostgres:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      MinSize: '1'
+      MaxSize: '2'
+      DesiredCapacity: '1'
+      LoadBalancerNames: [!Ref 'ElasticLoadBalancerPostgres']
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: 1
+      VPCZoneIdentifier:
+        - !Ref AppTierPubSubnet1
+        - !Ref AppTierPubSubnet2
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: 'true'
+          Value: !Sub ${NamePrefix}-Postgres-Autoscaling-Group
+
+  AutoScalingGroupOracle:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      MinSize: '1'
+      MaxSize: '2'
+      DesiredCapacity: '1'
+      LoadBalancerNames: [!Ref 'ElasticLoadBalancerOracle']
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: 1
+      VPCZoneIdentifier:
+        - !Ref AppTierPubSubnet1
+        - !Ref AppTierPubSubnet2
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: 'true'
+          Value: !Sub ${NamePrefix}-Oracle-Autoscaling-Group
+  
+  # S3 Buckets - Create S3 buckets
+  S3TextIndexes:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      AccessControl: BucketOwnerFullControl
+  S3ServerLogs:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      AccessControl: BucketOwnerFullControl
+  S3Documents:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      AccessControl: BucketOwnerFullControl
+
+  ## Endpoint - Create VPC endpoint for the S3 buckets, giving the VPC access to them.
+  S3GatewayEndpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action:
+              - 's3:*'
+            Resource:
+              - !Join ["", ["arn:aws:s3:::", !Ref S3TextIndexes, "/*"]]
+              - !Join ["", ["arn:aws:s3:::", !Ref S3ServerLogs, "/*"]]
+              - !Join ["", ["arn:aws:s3:::", !Ref S3Documents, "/*"]]
+      RouteTableIds:
+        - !Ref RouteTable1
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcId: !Ref VPC
+
+######################
+# Outputs section
+# This section contains values that will show up in the Outputs tab in the management console. They allow a convenient way to view information 
+# about the resources generated by CloudFormation.
+######################
+
+Outputs:
+  
+  VPCID: # Show the VPC ID
+    Description: VPC ID.
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${AWS::StackName}-VPCID
+
+  OracleDatabaseEndpoint: # Show the endpoint for the Oracle database
+    Description: "Connection endpoint for the Oracle database"
+    Value: !GetAtt OraclePrimaryDB.Endpoint.Address
+    Export:
+      Name: !Sub ${AWS::StackName}-OracleDatabaseEndpoint
+
+  OracleStandbyDatabaseEndpoint: # Show the endpoint for the Oracle standby database
+    Description: "Connection endpoint for the Oracle standby database"
+    Value: !GetAtt OracleStandbyDB.Endpoint.Address
+    Export:
+      Name: !Sub ${AWS::StackName}-OracleStandbyDatabaseEndpoint
+
+  PostgresDatabaseEndpoint: # Show the endpoint for the PostgreSQL database
+    Description: "Connection endpoint for the PostgreSQL database"
+    Value: !GetAtt PostgresPrimaryDB.Endpoint.Address
+    Export:
+      Name: !Sub ${AWS::StackName}-PostgresDatabaseEndpoint
+  
+  PostgresStandbyDatabaseEndpoint: # Show the endpoint for the PostgreSQL standby database
+    Description: "Connection endpoint for the standby PostgreSQL database"
+    Value: !GetAtt PostgresStandbyDB.Endpoint.Address
+    Export:
+        Name: !Sub ${AWS::StackName}-PostgresStandbyDatabaseEndpoint
+ 
+  PostgresELBPublicDNS:
+    Description: DNS address of the Postgres Application Load Balancer
+    Value: !GetAtt ElasticLoadBalancerPostgres.DNSName
+    Export:
+      Name: !Sub ${AWS::StackName}-PostgresELBPublicDNS
+
+  OracleELBPublicDNS:
+    Description: DNS address of the Oracle Application Load Balancer
+    Value: !GetAtt ElasticLoadBalancerOracle.DNSName
+    Export:
+      Name: !Sub ${AWS::StackName}-OracleELBPublicDNS
