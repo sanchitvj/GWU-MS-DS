@@ -1,0 +1,62 @@
+---
+title: "Data viz Assignment 1 template"
+author: "Eric Lawrence"
+format: html
+editor: visual
+cache: true
+---
+
+## All our assignments will use Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>. To typeset Quarto files, click the "Render" button that looks like this:
+
+![The render button](render_button.png){fig-alt="A right facing arrow followed by the word \"Render\""}
+
+## Leaflet map
+
+I grew up in Sioux City, Iowa and attended [Sioux City East High School](https://east-high.siouxcityschools.org/o/east-high). Here's a map of the school.
+
+```{r edl_map}
+# load leaflet library
+library(leaflet)
+
+# create map object
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(-96.3403, 42.4524, popup="Home of the Black Raiders")
+m  # Print the map
+```
+
+I found the latitude and longitude coordinates by googling "Sioux City East latitude longitude." You can do the same to find your own coordinates.
+
+If you tried to knit this file and it gave you an error of `Error in library(tm) : there is no package called ‘tm’` then you need to install the leaflet package. You can do that by clicking on the package tab in the lower right window, then the install button, and then type in leaflet. Hit return, and the package will install.
+
+## Now I'll make a dot plot using the `gapminder` package
+
+```{r edl_gapminder_plot}
+library(gapminder)
+library(tidyverse)
+
+gapminder_2007 <- filter(gapminder, year == 2007)
+
+ggplot(data = filter(gapminder_2007, continent == "Europe"), aes(gdpPercap, country)) + 
+  geom_point() + theme_light()
+```
+
+**YOUR NAME HERE'S work**
+
+This chunk called `my_map` is where you will put *your* map. Copy my map code from above, paste it into this chunk, and then find your own coordinates and substitute them.
+
+```{r my_map}
+
+```
+
+Tell me a little about your map here.  Why did you choose this location?
+
+The next chunk called `my_gapminder` is where you will put your gapminder plot. Follow the instructions in the assignment to make a new plot. One of the things I ask you to do is to change the graph theme. To see what the alternative themes are, you can click on the ggplot2 link the in package window, then scroll down to the 't's to see different themes. Alternatively, you can Google "ggplot2 themes" and one of the first hits will be this [page](https://ggplot2.tidyverse.org/reference/ggtheme.html) where you can see the themes in action. There's also a package called `ggthemes` that has more [themes](https://github.com/jrnold/ggthemes) you can use.
+
+```{r my_gapminder_plot}
+
+```
+
+And tell me a little about the plot here.

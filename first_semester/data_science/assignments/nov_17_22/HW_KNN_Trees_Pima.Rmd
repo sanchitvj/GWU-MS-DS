@@ -72,7 +72,7 @@ Another quick EDA to perform, you can plot the `pairs()`. The plot function can 
 ```{r, results='markup', fig.align="center", fig.width = 10, fig.height=5}
 ## Example of pairs.panel on the iris data set -- edit for your analysis of the pima data ##
 loadPkg("psych")
-pairs.panels(pima[,-5], 
+pairs.panels(pima[,-5],
              method = "pearson", # correlation method
              hist.col = "#00AFBB", # set histogram color, can use "#22AFBB", "red",
              density = TRUE,  # show density plots

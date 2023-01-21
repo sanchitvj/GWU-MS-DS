@@ -1,0 +1,41 @@
+---
+title: "My 2022 dear data graph"
+author: "Eric Lawrence"
+format: html
+editor: visual
+---
+
+## My dear data project
+
+I downloaded my most played songs on Spotify for 2022 using the [exportify](https://watsonbox.github.io/exportify/) app, which defaults to a .csv file. I then read it into R and cleaned up the variable names.
+
+```{r read-data}
+library(tidyverse)
+library(janitor)
+
+# read in songs file
+my_songs <- readr::read_csv("your_top_songs_2022.csv")
+
+# clean up variable names
+my_songs <- janitor::clean_names(my_songs)
+```
+
+I then made a table of the most commonly played artists.
+
+```{r make-table}
+# make a table of most common artists
+my_songs|>
+  group_by(artist_name_s)|>
+  summarize(Freq=n())|>
+  arrange(desc(Freq))|>
+  print(n = 20)
+```
+
+
+
+
+I then took that table and drew by hand this simple bar chart:
+
+[![Source: EDL's Spotify account](dear_data_edl.jpg)](https://open.spotify.com/playlist/37i9dQZF1F0sijgNaJdgit?si=72604708c04947ad)
+
+Neither handwriting nor art were strong points for me in school.
