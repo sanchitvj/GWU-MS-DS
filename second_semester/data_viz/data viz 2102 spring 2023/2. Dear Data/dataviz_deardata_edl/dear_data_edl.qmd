@@ -31,11 +31,8 @@ my_songs|>
   print(n = 20)
 ```
 
-
-
-
 I then took that table and drew by hand this simple bar chart:
 
-[![Source: EDL's Spotify account](dear_data_edl.jpg)](https://open.spotify.com/playlist/37i9dQZF1F0sijgNaJdgit?si=72604708c04947ad)
+[![Source: EDL\'s Spotify account](dear_data_edl.jpg)](https://open.spotify.com/playlist/37i9dQZF1F0sijgNaJdgit?si=72604708c04947ad)
 
 Neither handwriting nor art were strong points for me in school.
