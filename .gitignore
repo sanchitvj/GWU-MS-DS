@@ -142,3 +142,4 @@ dmypy.json
 **.Rhistory
 **scikit-fda
 **.idea
+**.vscode
