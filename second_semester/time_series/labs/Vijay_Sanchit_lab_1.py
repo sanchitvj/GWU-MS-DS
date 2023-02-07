@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller
-from statsmodels.tsa.stattools import kpss
+from toolbox import cal_rolling_mean_var, adf_test, kpss_test, non_seasonal_differencing
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -29,21 +28,6 @@ print(f"The GDP mean is: {df.GDP.mean():.2f} and the variance is: {df.GDP.var():
 
 # print(df['Sales'].rolling(100).mean())
 # print(df.Sales[0:1].mean())
-
-def cal_rolling_mean_var(df, column):
-    n = len(df)
-    rolling_mean = []
-    rolling_var = []
-    for i in range(n):
-        mean = df[f"{column}"][0:i].mean()
-        var = np.var(df[f"{column}"][0:i])  # .var()
-        # use the np.var() function when you want to calculate the population
-        # variance and use the .var() function when you want to calculate the sample variance.
-        rolling_mean.append(mean)
-        rolling_var.append(var)
-
-    return rolling_mean, rolling_var
-
 
 rolling_mean_sales, rolling_var_sales = cal_rolling_mean_var(df, "Sales")
 rolling_mean_adbudget, rolling_var_adbudget = cal_rolling_mean_var(df, "AdBudget")
@@ -102,34 +86,12 @@ plt.subplots_adjust(bottom=0.15)
 plt.tight_layout(h_pad=2.2, w_pad=2)
 plt.show()
 
-def adf_test(x):
-    result = adfuller(x)
-    print("ADF Statistic: %f" % result[0])
-    print('p-value: %f' % result[1])
-    print('Critical Values:')
-    for key, value in result[4].items():
-        if int(key.strip('%')) <= 5:
-            print('\t%s: %.3f' % (key, value))
-
 print("ADF test for Sales:")
 adf_test(df.Sales)
 print("ADF test for AdBudget:")
 adf_test(df.AdBudget)
 print("ADF test for GDP:")
 adf_test(df.GDP)
-
-def kpss_test(timeseries):
-    # print ('Results of KPSS Test:')
-    kpsstest = kpss(timeseries, regression='c', nlags="auto")
-    # kpss_output = pd.Series(kpsstest[0:3], index=['Test Statistic','p-value','Lags Used'])
-    print(f"KPSS Statistic: {kpsstest[0]}")
-    print(f"p-value: {kpsstest[1]}")
-    print('Critical Values:')
-    for key,value in kpsstest[3].items():
-        if float(key.strip('%')) <= 5:
-            # kpss_output['Critical Value (%s)'%key] = value
-            # print (kpss_output)
-            print('\t%s: %.3f' % (key, value))
 
 print("KPSS test for Sales:")
 kpss_test(df.Sales)
@@ -180,15 +142,6 @@ adf_test(df_ap.passengers)
 print("KPSS test for #Passengers:")
 kpss_test(df_ap.passengers)
 
-def non_seasonal_differencing(df, column, order):
-    diff = []
-    for i in range(len(df)):
-        if i < order:
-            diff.append(0)
-        else:
-            diff.append(df[f"{column}"][i] - df[f"{column}"][i-1])
-
-    return diff
 
 df_ap["first_diff"] = non_seasonal_differencing(df_ap, "passengers", 1)
 rolling_mean_first, rolling_var_first = cal_rolling_mean_var(df_ap, "first_diff")
@@ -298,6 +251,3 @@ adf_test(df_ap.log_first_diff)
 
 print("KPSS test for log transformed 1st order difference:")
 kpss_test(df_ap.log_first_diff)
-
-
-
