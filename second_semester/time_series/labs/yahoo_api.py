@@ -6,7 +6,7 @@ yf.pdr_override()
 stocks = ['AAPL', 'ORCL', 'TSLA', 'IBM' 'YELP', 'MSFT']
 start_date = '2000-01-01'
 end_date = '2023-02-02'
-df = data.get_data_yahoo(stocks[0], start=start_date, end=end_date)
+df = data.get_data_yahoo(stocks[2], start=start_date, end=end_date)
 
 print(df.tail().to_string())
 

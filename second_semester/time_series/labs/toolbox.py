@@ -1,5 +1,7 @@
 import numpy as np
 from statsmodels.tsa.stattools import adfuller, kpss
+import matplotlib.pyplot as plt
+
 def cal_rolling_mean_var(df, column):
     n = len(df)
     rolling_mean = []
@@ -32,7 +34,7 @@ def kpss_test(timeseries):
     print(f"KPSS Statistic: {kpsstest[0]}")
     print(f"p-value: {kpsstest[1]}")
     print('Critical Values:')
-    for key,value in kpsstest[3].items():
+    for key, value in kpsstest[3].items():
         if float(key.strip('%')) <= 5:
             # kpss_output['Critical Value (%s)'%key] = value
             # print (kpss_output)
@@ -45,6 +47,40 @@ def non_seasonal_differencing(df, column, order):
         if i < order:
             diff.append(0)
         else:
-            diff.append(df[f"{column}"][i] - df[f"{column}"][i-1])
+            diff.append(df[f"{column}"][i] - df[f"{column}"][i - 1])
 
     return diff
+
+
+def auto_corr(yt, lag, title=None):
+    y_bar = np.mean(yt)
+    ryt = []
+    arr2 = []
+    for k in range(len(yt)):
+        y1 = yt[k] - y_bar
+        arr2.append(y1 * y1)
+    norm_var = np.sum(arr2)
+
+    for i in range(lag+1):
+        arr1 = []
+        for j in range(i, len(yt)):
+            y1 = yt[j] - y_bar
+            y2 = yt[j - i] - y_bar
+            arr1.append(y1 * y2)
+
+        ryt.append(round(np.sum(arr1) / norm_var, 4))
+        del arr1
+
+    if title is None:
+        title = f'y = {yt}'
+
+    ryt_plot = ryt[::-1] + ryt[1:]
+    lags = [-x for x in range(lag, 0, -1)] + [x for x in range(lag+1)]
+    plt.stem(lags, ryt_plot, markerfmt='red', basefmt='gray', linefmt='blue')
+    plt.axhspan(-1.96/np.sqrt(len(yt)), 1.96/np.sqrt(len(yt)), color="lavender")
+    plt.xlabel("Lags")
+    plt.ylabel("Magnitude")
+    plt.title(f'Auto-correlation Function of {title}')
+    plt.show()
+    return ryt
+
