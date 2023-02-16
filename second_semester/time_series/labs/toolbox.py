@@ -1,6 +1,11 @@
+import random
 import numpy as np
 from statsmodels.tsa.stattools import adfuller, kpss
 import matplotlib.pyplot as plt
+from pandas_datareader import data
+import yfinance as yf
+yf.pdr_override()
+
 
 def cal_rolling_mean_var(df, column):
     n = len(df)
@@ -52,7 +57,7 @@ def non_seasonal_differencing(df, column, order):
     return diff
 
 
-def auto_corr(yt, lag, title=None):
+def auto_corr(yt, lag, title=None, plot=True):
     y_bar = np.mean(yt)
     ryt = []
     arr2 = []
@@ -74,13 +79,44 @@ def auto_corr(yt, lag, title=None):
     if title is None:
         title = f'y = {yt}'
 
-    ryt_plot = ryt[::-1] + ryt[1:]
-    lags = [-x for x in range(lag, 0, -1)] + [x for x in range(lag+1)]
-    plt.stem(lags, ryt_plot, markerfmt='red', basefmt='gray', linefmt='blue')
-    plt.axhspan(-1.96/np.sqrt(len(yt)), 1.96/np.sqrt(len(yt)), color="lavender")
-    plt.xlabel("Lags")
-    plt.ylabel("Magnitude")
-    plt.title(f'Auto-correlation Function of {title}')
-    plt.show()
+    if plot:
+        ryt_plot = ryt[::-1] + ryt[1:]
+        lags = [-x for x in range(lag, 0, -1)] + [x for x in range(lag+1)]
+        plt.stem(lags, ryt_plot, markerfmt='red', basefmt='gray', linefmt='blue')
+        plt.axhspan(-1.96/np.sqrt(len(yt)), 1.96/np.sqrt(len(yt)), color="lavender")
+        plt.xlabel("Lags")
+        plt.ylabel("Magnitude")
+        plt.title(f'Auto-correlation Function of {title}')
+        plt.show()
     return ryt
 
+
+def plt_subplot(data, plot_title, title, row, col, ylab, xlab, acf=False, lag=None):
+    colors = ['chartreuse', 'olive', 'salmon', 'teal', 'plum', 'lavender', 'navy']
+    color = random.choice(colors)
+    fig, axes = plt.subplots(nrows=row, ncols=col)
+    for i, ax in enumerate(axes.flat):
+
+        if acf:
+            ryt = data[i]
+            ryt_plot = ryt[::-1] + ryt[1:]
+            ryt_plot = [x for x in ryt_plot if x is not None]
+            ryt_len = [x for x in ryt if x is not None]
+            lags = [-x for x in range(lag, 0, -1)] + [x for x in range(lag + 1)]
+            markerline, stemlines, baseline = ax.stem(lags, ryt_plot, markerfmt='red', basefmt='gray', linefmt='blue')
+            plt.setp(stemlines, 'linewidth', 1)
+            plt.setp(markerline, 'markersize', 1)
+            ax.axhspan(-1.96 / np.sqrt(len(ryt_len)), 1.96 / np.sqrt(len(ryt_len)), color="lavender")
+            ax.set_title(f"{title[i]}")
+        else:
+            ax.plot(data[i], color=color)
+            ax.set_title(f"{title[i]}")
+            ax.tick_params(axis='x', labelsize=8)
+            ax.grid()
+
+    plt.tight_layout(h_pad=2, w_pad=2)
+    plt.subplots_adjust(bottom=0.1, left=0.11)
+    fig.supxlabel(xlab)
+    fig.supylabel(ylab)
+    fig.suptitle(plot_title)
+    plt.show()
