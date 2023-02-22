@@ -4,6 +4,7 @@ from statsmodels.tsa.stattools import adfuller, kpss
 import matplotlib.pyplot as plt
 from pandas_datareader import data
 import yfinance as yf
+
 yf.pdr_override()
 
 
@@ -66,7 +67,7 @@ def auto_corr(yt, lag, title=None, plot=True):
         arr2.append(y1 * y1)
     norm_var = np.sum(arr2)
 
-    for i in range(lag+1):
+    for i in range(lag + 1):
         arr1 = []
         for j in range(i, len(yt)):
             y1 = yt[j] - y_bar
@@ -81,9 +82,9 @@ def auto_corr(yt, lag, title=None, plot=True):
 
     if plot:
         ryt_plot = ryt[::-1] + ryt[1:]
-        lags = [-x for x in range(lag, 0, -1)] + [x for x in range(lag+1)]
+        lags = [-x for x in range(lag, 0, -1)] + [x for x in range(lag + 1)]
         plt.stem(lags, ryt_plot, markerfmt='red', basefmt='gray', linefmt='blue')
-        plt.axhspan(-1.96/np.sqrt(len(yt)), 1.96/np.sqrt(len(yt)), color="lavender")
+        plt.axhspan(-1.96 / np.sqrt(len(yt)), 1.96 / np.sqrt(len(yt)), color="lavender")
         plt.xlabel("Lags")
         plt.ylabel("Magnitude")
         plt.title(f'Auto-correlation Function of {title}')
@@ -120,3 +121,52 @@ def plt_subplot(data, plot_title, title, row, col, ylab, xlab, acf=False, lag=No
     fig.supylabel(ylab)
     fig.suptitle(plot_title)
     plt.show()
+
+
+def box_pierce_test_q_value(y_hat, lag, t):
+    rk = auto_corr(y_hat, lag, plot=False)
+
+    rk2 = [x ** 2 for x in rk]
+    q = t * sum(rk2)
+
+    print("Q-value: ", round(q, 3))
+
+
+def average_method(yt, i, n_train):
+    if i < n_train:
+        y_hat = sum(yt[:i]) / (len(yt[:i]))
+    else:
+        i = n_train - 1
+        y_hat = sum(yt[:i]) / (len(yt[:i]))
+    return y_hat
+
+
+def naive_method(yt, i, n_train):
+    if i < n_train:
+        y_hat = yt[i - 1]
+    else:
+        y_hat = yt[n_train - 1]
+    return y_hat
+
+
+def drift_method(yt, i, n_train):
+    if i < n_train:
+        y_hat = yt[n_train-1] + i * ((yt[n_train-1] - yt[0]) / (n_train - 1))
+    else:
+        y_hat = yt[n_train-1] + (i-n_train+1) * ((yt[n_train-1] - yt[0]) / (n_train - 1))
+    # n = len(yt)
+    # slope = (yt[n - 1] - yt[0]) / (n - 1)
+    # intercept = yt[0] - (slope * 1)
+    # y_hat = slope * (i + 1) + intercept  # for t in range(1, n + 1)
+    return y_hat
+
+
+def simple_expo_smoothing_method(yt, yt_hat, i, n_train, alpha=0.5):
+    if i == 0:
+        y_hat = yt[i]
+    elif i < n_train:
+        y_hat = alpha * yt[i] + (1 - alpha) * yt_hat[i - 1]
+    else:
+        # i = n_train - 1
+        y_hat = yt_hat[n_train - 1]
+    return y_hat
