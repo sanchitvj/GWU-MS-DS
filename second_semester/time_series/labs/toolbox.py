@@ -83,16 +83,18 @@ def auto_corr(yt, lag, title=None, plot=True):
     if plot:
         ryt_plot = ryt[::-1] + ryt[1:]
         lags = [-x for x in range(lag, 0, -1)] + [x for x in range(lag + 1)]
-        plt.stem(lags, ryt_plot, markerfmt='red', basefmt='gray', linefmt='blue')
+        markerline, stemlines, baseline = plt.stem(lags, ryt_plot, markerfmt='red', basefmt='gray', linefmt='lightblue')
         plt.axhspan(-1.96 / np.sqrt(len(yt)), 1.96 / np.sqrt(len(yt)), color="lavender")
+        plt.setp(stemlines, 'linewidth', 2)
+        plt.setp(markerline, 'markersize', 2)
         plt.xlabel("Lags")
         plt.ylabel("Magnitude")
-        plt.title(f'Auto-correlation Function of {title}')
+        plt.title(f'{title}')
         plt.show()
     return ryt
 
 
-def plt_subplot(data, plot_title, title, row, col, ylab, xlab, acf=False, lag=None):
+def plt_subplot(data, plot_title, title, row, col, ylab, xlab, acf=False, lag=None, marker_thickness=2, line_width=2):
     colors = ['chartreuse', 'olive', 'salmon', 'teal', 'plum', 'lavender', 'navy']
     color = random.choice(colors)
     fig, axes = plt.subplots(nrows=row, ncols=col)
@@ -105,38 +107,40 @@ def plt_subplot(data, plot_title, title, row, col, ylab, xlab, acf=False, lag=No
             ryt_len = [x for x in ryt if x is not None]
             lags = [-x for x in range(lag, 0, -1)] + [x for x in range(lag + 1)]
             markerline, stemlines, baseline = ax.stem(lags, ryt_plot, markerfmt='red', basefmt='gray', linefmt='blue')
-            plt.setp(stemlines, 'linewidth', 1)
-            plt.setp(markerline, 'markersize', 1)
+            plt.setp(stemlines, 'linewidth', line_width)
+            plt.setp(markerline, 'markersize', marker_thickness)
             ax.axhspan(-1.96 / np.sqrt(len(ryt_len)), 1.96 / np.sqrt(len(ryt_len)), color="lavender")
             ax.set_title(f"{title[i]}")
+            ax.set_ylabel(ylab)
+            ax.set_xlabel(xlab)
         else:
             ax.plot(data[i], color=color)
             ax.set_title(f"{title[i]}")
             ax.tick_params(axis='x', labelsize=8)
             ax.grid()
+            ax.set_ylabel(ylab)
+            ax.set_xlabel(xlab)
 
     plt.tight_layout(h_pad=2, w_pad=2)
-    plt.subplots_adjust(bottom=0.1, left=0.11)
-    fig.supxlabel(xlab)
-    fig.supylabel(ylab)
+    plt.subplots_adjust(bottom=0.1, left=0.11, top=0.85)
+    # fig.supxlabel(xlab)
+    # fig.supylabel(ylab)
     fig.suptitle(plot_title)
     plt.show()
 
 
 def box_pierce_test_q_value(y_hat, lag, t):
     rk = auto_corr(y_hat, lag, plot=False)
-
-    rk2 = [x ** 2 for x in rk]
+    rk2 = [x ** 2 for x in rk[1:]]
+    # rk[1:] because not including acf=1 as it will make Q-value big
     q = t * sum(rk2)
-
-    print("Q-value: ", round(q, 3))
-
+    return round(q, 3)
 
 def average_method(yt, i, n_train):
     if i < n_train:
         y_hat = sum(yt[:i]) / (len(yt[:i]))
     else:
-        i = n_train - 1
+        i = n_train
         y_hat = sum(yt[:i]) / (len(yt[:i]))
     return y_hat
 
@@ -150,8 +154,10 @@ def naive_method(yt, i, n_train):
 
 
 def drift_method(yt, i, n_train):
-    if i < n_train:
-        y_hat = yt[n_train-1] + i * ((yt[n_train-1] - yt[0]) / (n_train - 1))
+    if i <= 1:
+        y_hat = np.nan
+    elif i < n_train:
+        y_hat = yt[i-1] + 1 * ((yt[i-1] - yt[0]) / (i-1))
     else:
         y_hat = yt[n_train-1] + (i-n_train+1) * ((yt[n_train-1] - yt[0]) / (n_train - 1))
     # n = len(yt)
@@ -165,8 +171,7 @@ def simple_expo_smoothing_method(yt, yt_hat, i, n_train, alpha=0.5):
     if i == 0:
         y_hat = yt[i]
     elif i < n_train:
-        y_hat = alpha * yt[i] + (1 - alpha) * yt_hat[i - 1]
+        y_hat = alpha * yt[i-1] + (1 - alpha) * yt_hat[i-1]
     else:
-        # i = n_train - 1
-        y_hat = yt_hat[n_train - 1]
+        y_hat = alpha * yt[n_train-1] + (1 - alpha) * yt_hat[n_train-1]  # yt_hat[n_train - 1]
     return y_hat
