@@ -131,6 +131,7 @@ dmypy.json
 **.pdf
 **.png
 **.csv
+**.xlsx
 **.xls
 **.docx
 **.pptx
