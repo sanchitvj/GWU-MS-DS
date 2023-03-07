@@ -1,6 +1,8 @@
 import random
 import numpy as np
+import statsmodels.api as sm
 from statsmodels.tsa.stattools import adfuller, kpss
+from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 from pandas_datareader import data
 import yfinance as yf
@@ -58,7 +60,7 @@ def non_seasonal_differencing(df, column, order):
     return diff
 
 
-def auto_corr(yt, lag, title=None, plot=True):
+def auto_corr(yt, lag, title=None, plot=True, marker_thickness=2, line_width=2):
     y_bar = np.mean(yt)
     ryt = []
     arr2 = []
@@ -83,10 +85,10 @@ def auto_corr(yt, lag, title=None, plot=True):
     if plot:
         ryt_plot = ryt[::-1] + ryt[1:]
         lags = [-x for x in range(lag, 0, -1)] + [x for x in range(lag + 1)]
-        markerline, stemlines, baseline = plt.stem(lags, ryt_plot, markerfmt='red', basefmt='gray', linefmt='lightblue')
+        markerline, stemlines, baseline = plt.stem(lags, ryt_plot, markerfmt='red', basefmt='gray', linefmt='blue')
         plt.axhspan(-1.96 / np.sqrt(len(yt)), 1.96 / np.sqrt(len(yt)), color="lavender")
-        plt.setp(stemlines, 'linewidth', 2)
-        plt.setp(markerline, 'markersize', 2)
+        plt.setp(stemlines, 'linewidth', line_width)
+        plt.setp(markerline, 'markersize', marker_thickness)
         plt.xlabel("Lags")
         plt.ylabel("Magnitude")
         plt.title(f'{title}')
@@ -175,3 +177,79 @@ def simple_expo_smoothing_method(yt, yt_hat, i, n_train, alpha=0.5):
     else:
         y_hat = alpha * yt[n_train-1] + (1 - alpha) * yt_hat[n_train-1]  # yt_hat[n_train - 1]
     return y_hat
+
+
+def backward_regression(x_train_s, x_train, Y):
+    scaler = StandardScaler()
+    cols = x_train.columns
+    # print(cols[1:8])
+    X = sm.add_constant(x_train_s)
+    model_orig = sm.OLS(Y, X).fit()
+    aic_orig = model_orig.aic
+    bic_orig = model_orig.bic
+    adj_rsquare = model_orig.rsquared_adj
+    # criterions = {"aic": [aic_orig], "bic": [bic_orig], "adj_rsq": [adj_rsquare]}
+    criterions = {"aic": [], "bic": [], "adj_rsq": []}
+
+    selected_feats = [[cols]]
+    while True:
+        for i, x in enumerate(cols):
+            # if i == 0:
+            new_train = x_train
+            new_X_df = new_train.drop(cols[i], axis=1)
+            new_X = scaler.fit_transform(new_X_df)
+            X = sm.add_constant(new_X)
+            new_model = sm.OLS(Y, X).fit()
+
+            if aic_orig > new_model.aic or bic_orig > new_model.bic and adj_rsquare < new_model.rsquared_adj:
+                # criterions['aic'][0] = new_model.aic
+                # criterions['bic'][0] = new_model.bic
+                # criterions['adj_rsq'][0] = new_model.rsquared_adj
+                selected_feats.append([new_X_df.columns])
+                criterions['aic'].append(new_model.aic)
+                criterions['bic'].append(new_model.bic)
+                criterions['adj_rsq'].append(new_model.rsquared_adj)
+                aic_orig, bic_orig, adj_rsquare = new_model.aic, new_model.bic, model_orig.rsquared_adj
+            # else:
+            #     break
+            # print(i)
+            # else:
+            del new_train
+            for j, y in enumerate(cols):
+                # if j == 0:
+                #     continue
+                if 0 < j < 13:
+                    new_train = x_train
+                    # for k, z in enumerate(cols):
+                    # print(cols[1:j])
+                    new_train = new_train.drop(cols[i], axis=1)
+                    new_X_df = new_train.drop(new_train.columns[:j], axis=1)
+                    new_X = scaler.fit_transform(new_X_df)
+                    X = sm.add_constant(new_X)
+                    new_model = sm.OLS(Y, X).fit()
+
+                    # v = new_model.rsquared_adj
+                    # print(j)
+                    if aic_orig > new_model.aic or bic_orig > new_model.bic and \
+                            adj_rsquare < new_model.rsquared_adj:
+                        # criterions['aic'][0] = new_model.aic
+                        # criterions['bic'][0] = new_model.bic
+                        # criterions['adj_rsq'][0] = new_model.rsquared_adj
+                        print(i, [x for x in range(j)])
+                        criterions['aic'].append(new_model.aic)
+                        criterions['bic'].append(new_model.bic)
+                        criterions['adj_rsq'].append(new_model.rsquared_adj)
+                        selected_feats.append(new_X_df.columns)
+                        aic_orig, bic_orig, adj_rsquare = new_model.aic, new_model.bic, model_orig.rsquared_adj
+
+                    # else:
+                    #     # print("breaking")
+                    #     break
+                    del new_train
+        break
+    index_value = criterions['adj_rsq'].index(max(criterions['adj_rsq']))
+    # print(criterions['adj_rsq'][index_value], index_value)
+    return selected_feats[index_value]
+
+
+
