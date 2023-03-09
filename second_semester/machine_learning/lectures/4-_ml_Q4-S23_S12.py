@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
+np.random.seed(6202)
 # -------------------------------------------------
 p = np.array([[1, 1, 2, 2, -1, -2, -1, -2 ],
               [1, 2, -1, 0, 2, 1, -1, -2]])
@@ -8,94 +8,56 @@ p = np.array([[1, 1, 2, 2, -1, -2, -1, -2 ],
 t = np.array([[-1, -1, -1, -1, 1, 1, 1 , 1],
               [-1, -1, 1 ,1, -1, -1, 1, 1]])
 # -------------------------------------------------
-# sns.scatterplot(p, t)
-# plt.scatter(p, t)
-plt.scatter(p[0], p[1], c=t[1], cmap='bwr')
+
+plt.scatter(p[0,:], p[1,:], label="input pattern")
+plt.scatter(t[0,:], t[1,:], label="target")
 plt.title("Patterns and Targets")
 plt.xlabel("p1")
 plt.ylabel("p2")
 plt.show()
-
-
 # -------------------------------------------------
-# w = np.zeros((2, 1))
-# alpha = 0.05
-# mse = 0
-# mse_ls = []
-# epochs = 2
-#
-# for i in range(3):
-#     for j in range(p.shape[1]):
-#         y = np.dot(w.T, p[:, j])
-#         e = t[:, j] - y
-#         w = w + alpha * np.outer(e, p[:, j])
-#         mse += (y - e) ** 2
-#     mse_ls.append(mse)
-#
-# # Print final weights
-# print("Final weights:")
-# print(w)
-# print(mse_ls)
-class Adaline:
-    def __init__(self, input_size):
-        self.w = np.zeros(input_size)
-        self.b = 0
-
-    def forward(self, x):
-        return np.dot(self.w, x) + self.b
-
-    def update(self, x, y, eta):
-        e = y - self.forward(x)
-        self.w += eta * e * x
-        self.b += eta * e
-
-        return  self.w, self.b
-
-# Train the ADALINE network
-net = Adaline(input_size=2)
-eta = 0.01
-epochs = 4
-mse_list = []
+w = np.random.rand(2, 2)
+b = np.random.rand(2,1)
+alpha = 0.05
+epochs = 1000
+e = np.zeros((2, p.shape[1]))
+sse = np.zeros((2, epochs))
 
 for epoch in range(epochs):
-    mse = 0
     for i in range(p.shape[1]):
-        x = p[:, i]
-        y = t[0, i]
-        w, b = net.update(x, y, eta)
-        mse += (y - net.forward(x))**2
-    mse_list.append(mse)
+        # print(w)
+        a = np.dot(w, p[:, i]).reshape(-1, 1) + b
+        # print(a)
+        # print(t[:, i])
+        e[:, i] = np.array(t[:, i] - a.ravel())
+        # print(e[:, i].reshape(-1, 1))
+        w = w + 2 * alpha * np.dot(e[:, i].reshape(-1, 1), p[:, i].T.reshape(1, 2))
+        b = b + 2 * alpha * np.array(e[:, i]).reshape(-1, 1)
+    sse[:, epoch] = np.sum(e ** 2, axis=1)
 
-print(mse_list)
-plt.plot(mse_list)
-plt.xlabel('Epoch')
-plt.ylabel('MSE')
+plt.loglog(sse[0, :])
+plt.loglog(sse[1, :])
+plt.xlabel('Epochs')
+plt.ylabel('SSE')
+plt.title('Sum Squared Error vs Epochs log scaled')
 plt.show()
-
 
 # -------------------------------------------------
 
-fig, ax = plt.subplots(figsize=(8, 8))
-ax.scatter(p[0, t[0, :] == 1], p[1, t[0, :] == 1], c='b', label='Class 1')
-ax.scatter(p[0, t[0, :] == -1], p[1, t[0, :] == -1], c='r', label='Class -1')
-ax.set_xlabel('p1')
-ax.set_ylabel('p2')
-ax.set_title('Decision Boundary')
-ax.legend()
+p1 = np.linspace(-2, 2, 100)
+db1 = -w[0, 0] / w[0, 1] * p1 - b[0, 0] / w[0, 1]
+db2 = -w[1, 0] / w[1, 1] * p1 - b[1, 0] / w[1, 1]
 
-# Decision boundary equation
-slope = -w[0] / w[1]
-intercept = -b / w[1]
-x = np.array([-3, 3])
-y = slope * x + intercept
-print(y)
-ax.plot(x, y, c='k', label='Decision boundary')
-
+# Plotting decision boundaries
+plt.scatter(p[0, :], p[1, :])
+plt.plot(p1, db1)
+plt.plot(p1, db2)
+plt.ylim([-4, 4])
+plt.xlabel('p1')
+plt.ylabel('p2')
+plt.title('Decision Boundaries')
 plt.show()
-
 
 # -------------------------------------------------
 
-
-
-
+print("Perceptron produces straighter decision boundaries while Adaline's have slopes due to their learning algorithms. Adaline converges to a solution minimizing SSE but Perceptron may not converge or converge to an inferior solution in non-linearly separable data.")

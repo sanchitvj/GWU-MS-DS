@@ -4,10 +4,33 @@ import statsmodels.api as sm
 from statsmodels.tsa.stattools import adfuller, kpss
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from pandas_datareader import data
 import yfinance as yf
-
 yf.pdr_override()
+np.random.seed(6313)
+colors = [
+    "#1f77b4",  # muted blue
+    "#ff7f0e",  # safety orange
+    "#2ca02c",  # cooked asparagus green
+    "#d62728",  # brick red
+    "#9467bd",  # muted purple
+    "#8c564b",  # chestnut brown
+    "#e377c2",  # raspberry yogurt pink
+    "#7f7f7f",  # middle gray
+    "#bcbd22",  # curry yellow-green
+    "#17becf",  # blue-teal
+    "#aec7e8",  # pale blue
+    "#ffbb78",  # peach
+    "#98df8a",  # yellowish green
+    "#ff9896",  # coral
+    "#c5b0d5",  # lavender
+    "#c49c94",  # tan
+    "#f7b6d2",  # bubblegum pink
+    "#c7c7c7",  # light gray
+    "#dbdb8d",  # greenish yellow
+    "#9edae5"   # robin's egg blue
+]
 
 
 def cal_rolling_mean_var(df, column):
@@ -97,11 +120,10 @@ def auto_corr(yt, lag, title=None, plot=True, marker_thickness=2, line_width=2):
 
 
 def plt_subplot(data, plot_title, title, row, col, ylab, xlab, acf=False, lag=None, marker_thickness=2, line_width=2):
-    colors = ['chartreuse', 'olive', 'salmon', 'teal', 'plum', 'lavender', 'navy']
+    # colors = ['chartreuse', 'olive', 'salmon', 'teal', 'plum', 'lavender', 'navy']
     color = random.choice(colors)
     fig, axes = plt.subplots(nrows=row, ncols=col)
     for i, ax in enumerate(axes.flat):
-
         if acf:
             ryt = data[i]
             ryt_plot = ryt[::-1] + ryt[1:]
@@ -162,10 +184,6 @@ def drift_method(yt, i, n_train):
         y_hat = yt[i-1] + 1 * ((yt[i-1] - yt[0]) / (i-1))
     else:
         y_hat = yt[n_train-1] + (i-n_train+1) * ((yt[n_train-1] - yt[0]) / (n_train - 1))
-    # n = len(yt)
-    # slope = (yt[n - 1] - yt[0]) / (n - 1)
-    # intercept = yt[0] - (slope * 1)
-    # y_hat = slope * (i + 1) + intercept  # for t in range(1, n + 1)
     return y_hat
 
 
@@ -182,19 +200,16 @@ def simple_expo_smoothing_method(yt, yt_hat, i, n_train, alpha=0.5):
 def backward_regression(x_train_s, x_train, Y):
     scaler = StandardScaler()
     cols = x_train.columns
-    # print(cols[1:8])
     X = sm.add_constant(x_train_s)
     model_orig = sm.OLS(Y, X).fit()
     aic_orig = model_orig.aic
     bic_orig = model_orig.bic
     adj_rsquare = model_orig.rsquared_adj
-    # criterions = {"aic": [aic_orig], "bic": [bic_orig], "adj_rsq": [adj_rsquare]}
     criterions = {"aic": [], "bic": [], "adj_rsq": []}
 
     selected_feats = [[cols]]
     while True:
         for i, x in enumerate(cols):
-            # if i == 0:
             new_train = x_train
             new_X_df = new_train.drop(cols[i], axis=1)
             new_X = scaler.fit_transform(new_X_df)
@@ -202,54 +217,111 @@ def backward_regression(x_train_s, x_train, Y):
             new_model = sm.OLS(Y, X).fit()
 
             if aic_orig > new_model.aic or bic_orig > new_model.bic and adj_rsquare < new_model.rsquared_adj:
-                # criterions['aic'][0] = new_model.aic
-                # criterions['bic'][0] = new_model.bic
-                # criterions['adj_rsq'][0] = new_model.rsquared_adj
                 selected_feats.append([new_X_df.columns])
                 criterions['aic'].append(new_model.aic)
                 criterions['bic'].append(new_model.bic)
                 criterions['adj_rsq'].append(new_model.rsquared_adj)
                 aic_orig, bic_orig, adj_rsquare = new_model.aic, new_model.bic, model_orig.rsquared_adj
-            # else:
-            #     break
-            # print(i)
-            # else:
+
             del new_train
             for j, y in enumerate(cols):
-                # if j == 0:
-                #     continue
                 if 0 < j < 13:
                     new_train = x_train
-                    # for k, z in enumerate(cols):
-                    # print(cols[1:j])
                     new_train = new_train.drop(cols[i], axis=1)
                     new_X_df = new_train.drop(new_train.columns[:j], axis=1)
                     new_X = scaler.fit_transform(new_X_df)
                     X = sm.add_constant(new_X)
                     new_model = sm.OLS(Y, X).fit()
 
-                    # v = new_model.rsquared_adj
-                    # print(j)
                     if aic_orig > new_model.aic or bic_orig > new_model.bic and \
                             adj_rsquare < new_model.rsquared_adj:
-                        # criterions['aic'][0] = new_model.aic
-                        # criterions['bic'][0] = new_model.bic
-                        # criterions['adj_rsq'][0] = new_model.rsquared_adj
-                        print(i, [x for x in range(j)])
+                        # print(i, [x for x in range(j)])
                         criterions['aic'].append(new_model.aic)
                         criterions['bic'].append(new_model.bic)
                         criterions['adj_rsq'].append(new_model.rsquared_adj)
                         selected_feats.append(new_X_df.columns)
                         aic_orig, bic_orig, adj_rsquare = new_model.aic, new_model.bic, model_orig.rsquared_adj
 
-                    # else:
-                    #     # print("breaking")
-                    #     break
                     del new_train
         break
+
     index_value = criterions['adj_rsq'].index(max(criterions['adj_rsq']))
-    # print(criterions['adj_rsq'][index_value], index_value)
     return selected_feats[index_value]
 
 
+def moving_average(y):
+
+    m = int(input("Enter order of moving average (m): "))
+    # assert m > 2, "m=1,2 will not be accepted"
+    if m <= 2:
+        print("m=1,2 will not be accepted")
+        return 0
+    if m % 2 == 0:
+        mf = int(input("Enter folding order (second m): "))
+        if mf % 2 != 0:
+            print("Second m should be even")
+            return 0
+    k = (m - 1) / 2
+    if m % 2 == 0:
+        k = int(k + 0.5)
+    t_hat_t = []
+    for i, x in enumerate(y):
+        if i < k or i > len(y)-k-1:
+            t_hat_t.append(np.nan)
+        else:
+            if m % 2 == 0:
+                # print(y[i-k:i+k])
+                y_t_j = np.mean(y[i-k:i+k])
+            else:
+                k = int(k)
+                # print(y[i - k:i + k + 1])
+                y_t_j = np.mean(y[i - k:i + k + 1])
+            t_hat_t.append(round(y_t_j, 2))
+
+    t_hat_t_final = []
+    if m % 2 == 0:
+        # print(t_hat_t)
+        kf = float((mf - 1) / 2)
+        kf = int(kf + 0.5)
+        for i, x in enumerate(t_hat_t):
+            # if x is np.nan:
+            #     # continue
+            #     t_hat_t_final.append(x)
+            # else:
+            #     if i - k == np.nan or i + k == np.nan:  # i < k or i > len(y) - k - 1:
+            #         t_hat_t.append(np.nan)
+            #     else:
+            # print(t_hat_t[i - kf:i + kf])
+            y_t_j = np.mean(t_hat_t[i - kf:i + kf])
+            t_hat_t_final.append(round(y_t_j, 2))
+    else:
+        t_hat_t_final = t_hat_t
+
+    detrend = []
+    for a, b in zip(y, t_hat_t_final):
+        resid = a - b
+        detrend.append(round(resid, 2))
+    return t_hat_t_final, detrend
+
+
+def subplotting(xdata, ydata1, detrended, ydata2, plot_title, title, row, col, ylab, xlab, acf=False, lag=None, marker_thickness=2, line_width=2):
+    # colors = ['chartreuse', 'olive', 'salmon', 'teal', 'plum', 'lavender', 'navy']
+    color1, color2, color3 = random.choice(colors), random.choice(colors), random.choice(colors)
+    fig, axes = plt.subplots(nrows=row, ncols=col, figsize=(14,8))
+    # plt.figure()
+    for i, ax in enumerate(axes.flat):
+        ax.plot(xdata, ydata1[i], color=color1, label=f"{title[i]}")
+        ax.plot(xdata, detrended[i], color=color2, label="Detrended")
+        ax.plot(xdata, ydata2[i], color=color3, label="Original")
+        ax.plot()
+        ax.set_title(f"{title[i]}")
+        ax.tick_params(axis='x', labelsize=8)
+        ax.grid()
+        ax.set_ylabel(ylab)
+        ax.set_xlabel(xlab)
+        ax.legend()
+        plt.tight_layout()
+    # plt.subplots_adjust(bottom=0.1, left=0.11, top=0.85)
+    fig.suptitle(plot_title)
+    plt.show()
 
