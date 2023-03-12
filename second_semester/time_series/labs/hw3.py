@@ -11,7 +11,7 @@ df = pd.read_csv("daily-min-temperatures.csv", index_col='Date')  # , parse_date
 date = pd.date_range(start='1981-01-01', periods=len(df), freq='D')
 df.index = date
 
-# print(df.head().to_string())
+print(df.head().to_string())
 # plt.figure(figsize=(12, 10))
 # df.plot()
 # plt.grid()
