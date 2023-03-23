@@ -3,8 +3,8 @@ import numpy as np
 import statsmodels.api as sm
 from statsmodels.tsa.stattools import adfuller, kpss
 from sklearn.preprocessing import StandardScaler
+from scipy import signal
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 from pandas_datareader import data
 import yfinance as yf
 yf.pdr_override()
@@ -33,13 +33,13 @@ colors = [
 ]
 
 
-def cal_rolling_mean_var(df, column):
-    n = len(df)
+def cal_rolling_mean_var(y):
+    n = len(y)
     rolling_mean = []
     rolling_var = []
     for i in range(n):
-        mean = df[f"{column}"][0:i].mean()
-        var = np.var(df[f"{column}"][0:i])  # .var()
+        mean = y[0:i].mean()
+        var = np.var(y[0:i])  # .var()
         # use the np.var() function when you want to calculate the population
         # variance and use the .var() function when you want to calculate the sample variance.
         rolling_mean.append(mean)
@@ -72,13 +72,14 @@ def kpss_test(timeseries):
             print('\t%s: %.3f' % (key, value))
 
 
-def non_seasonal_differencing(df, column, order):
+def non_seasonal_differencing(y, order):
     diff = []
-    for i in range(len(df)):
+    for i in range(len(y)):
         if i < order:
             diff.append(0)
         else:
-            diff.append(df[f"{column}"][i] - df[f"{column}"][i - 1])
+            # diff.append(df[f"{column}"][i] - df[f"{column}"][i - 1])
+            diff.append(y[i] - y[i - 1])
 
     return diff
 
@@ -284,14 +285,6 @@ def moving_average(y):
         kf = float((mf - 1) / 2)
         kf = int(kf + 0.5)
         for i, x in enumerate(t_hat_t):
-            # if x is np.nan:
-            #     # continue
-            #     t_hat_t_final.append(x)
-            # else:
-            #     if i - k == np.nan or i + k == np.nan:  # i < k or i > len(y) - k - 1:
-            #         t_hat_t.append(np.nan)
-            #     else:
-            # print(t_hat_t[i - kf:i + kf])
             y_t_j = np.mean(t_hat_t[i - kf:i + kf])
             t_hat_t_final.append(round(y_t_j, 2))
     else:
@@ -305,7 +298,6 @@ def moving_average(y):
 
 
 def subplotting(xdata, ydata1, detrended, ydata2, plot_title, title, row, col, ylab, xlab, acf=False, lag=None, marker_thickness=2, line_width=2):
-    # colors = ['chartreuse', 'olive', 'salmon', 'teal', 'plum', 'lavender', 'navy']
     color1, color2, color3 = random.choice(colors), random.choice(colors), random.choice(colors)
     fig, axes = plt.subplots(nrows=row, ncols=col, figsize=(14,8))
     # plt.figure()
@@ -324,4 +316,65 @@ def subplotting(xdata, ydata1, detrended, ydata2, plot_title, title, row, col, y
     # plt.subplots_adjust(bottom=0.1, left=0.11, top=0.85)
     fig.suptitle(plot_title)
     plt.show()
+
+
+def ar_ma_order_2(e, a1, a2, process):
+
+    # e = np.random.normal(mean, std, N)
+    y = np.zeros(len(e))
+
+    k = y if process == "ar" else e
+    for i in range(len(e)):
+        if i == 0:
+            y[0] = e[0]
+        elif i == 1:
+            y[i] = a1 * k[i - 1] + e[i]
+        else:
+            y[i] = a1 * k[i - 1] + a2 * k[i - 2] + e[i]
+
+    return y
+
+
+def ar_ma_dlsim(e, num, den, process):
+
+    # e = np.random.normal(mean, std, N)
+    system = (num, den, 1) if process == "ar" else (den, num, 1)
+    t, y_dlsim = signal.dlsim(system, e)
+
+    return y_dlsim
+
+
+def ar_process(mean, std):
+    np.random.seed(6313)
+    N = int(input("Enter number of samples (N): "))
+    order = int(input("Enter order of AR process: "))
+    e = np.random.normal(mean, std, N)
+
+    num, den = [], []
+    for i in range(order+1):
+        n = 1 if i == 0 else 0
+        d = 1 if i == 0 else float(input(f"Enter denominator (coeff) {i}: "))
+        num.append(n), den.append(d)
+
+    # system = (num, den, 1)
+    # t, y_dlsim = signal.dlsim(system, e)
+    y_dlsim = ar_ma_dlsim(e, num, den, "ar")
+
+    y, na = y_dlsim, order
+    T = N - na - 1
+    X = np.zeros((T, na))
+    for i in range(na, T + na):
+        for j in range(na):
+            X[i - na, j] = y[i - j - 1]
+    Y = y[na:na + T]
+    a_hat = np.linalg.inv(X.T.dot(X)).dot(X.T).dot(Y)
+    a_hat_orig = [-i for i in a_hat.flatten()]
+    a_hat_round = [round(-i, 2) for i in a_hat.flatten()]
+
+    return a_hat_orig, den[1:], na, N, a_hat_round
+
+
+# def mse_a_hat():
+
+
 
