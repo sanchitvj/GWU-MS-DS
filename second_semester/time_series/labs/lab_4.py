@@ -11,15 +11,7 @@ mean = 0
 std = 1
 N = 1000
 e = np.random.normal(mean, std, N)
-# y = np.zeros(len(e))
-#
-# for i in range(len(e)):
-#     if i == 0:
-#        y[0] = e[0]
-#     elif i == 1:
-#         y[i] = 0.5*y[i-1] + e[i]
-#     else:
-#         y[i] = 0.5*y[i-1] + 0.2*y[i-2] + e[i]
+
 y_ar = ar_ma_order_2(e, 0.5, 0.2, "ar")
 
 plt.plot(y_ar)
@@ -46,61 +38,6 @@ y_dlsim = ar_ma_dlsim(e, num, den, "ar")
 # t, y_dlsim = signal.dlsim(system, e)
 y_dlsim = [round(i, 2) for i in y_dlsim.flatten()]
 print(f'y(dlsim) for AR: {y_dlsim[:5]}')
-# print(f' the experimental mean of y is {np.mean(y)}')
-
-# mean = 0
-# std = 1
-# N = 1000
-# e = np.random.normal(mean, std, N)
-# y = np.zeros(len(e))
-# c = []
-# for i in range(len(e)):
-#     if i == 0:
-#        y[0] = e[0]
-#     elif i == 1:
-#         y[i] = 0.5*y[i-1] + e[i]
-#     elif i > 1:
-#         y[i] = [c_*y_ for c_, y_ in zip(c, y[:i-na])]
-#     else:
-#         y[i] = 0.5*y[i-1] + 0.2*y[i-2] + e[i]
-
-# num_samples = 1000
-# order_ar = 2
-# white_noise = np.random.normal(0, 1, 1000)
-#
-# # Initialize AR process
-# ar_process = np.zeros(num_samples)
-# ar_coeffs = [-0.5, -0.2]
-# # Simulate AR process using for loop
-# for i in range(num_samples):
-#     if i == 0:
-#         ar_process[i] += white_noise[i]
-#     else:
-#         for j in range(order_ar):
-#             ar_process[i] += ar_coeffs[j] * ar_process[i-j]
-#         ar_process[i] += white_noise[i]
-
-# print(ar_process[:5])
-
-# e = np.random.normal(0, 1, 100000)
-# num = [1, 0, 0, 0]
-# den = [1, -0.5, -0.2, 0.67]
-# system = (num, den, 1)
-# t, y_dlsim = signal.dlsim(system, e)
-# print(f'y(dlsim) {y_dlsim[:5]}')
-
-# y = y_dlsim
-# na = 3
-# N = 100000
-# T = N - na - 1
-# X = np.zeros((T, na))
-# for i in range(na, T+na):
-#     for j in range(na):
-#         X[i-na, j] = y[i-j-1]
-#     # X[i-2, 1] = y[i-2]
-# Y = y[na:na+T]
-#
-# a_hat = np.linalg.inv(X.T.dot(X)).dot(X.T).dot(Y)
 
 a_hat_1k, coeff, order, samples, a_hat = ar_process(0, 1)
 print(f"Coefficient and a_hat values for order {order} and number of samples {samples} are:")
@@ -152,20 +89,7 @@ print("Root Mean squared error for 1000 samples: ", np.sqrt(np.mean(mse_1k)))
 print("Root Mean squared error for 5000 samples: ", np.sqrt(np.mean(mse_10k)))
 print("Root Mean squared error for 10000 samples: ", np.sqrt(np.mean(mse_100k)))
 
-# mean = 0
-# std = 1
-# N = 1000
-# e = np.random.normal(mean, std, N)
-# y = np.zeros(len(e))
-#
-# for i in range(len(e)):
-#     if i == 0:
-#        y[0] = e[0]
-#     elif i == 1:
-#         y[i] = 0.5*e[i-1] + e[i]
-#     else:
-#         y[i] = 0.5*e[i-1] + 0.2*e[i-2] + e[i]
-# y_ma = y
+
 y_ma = ar_ma_order_2(e, 0.5, 0.2, "ma")
 
 plt.plot(y_ma)
@@ -194,9 +118,3 @@ print(f'For loop Method MA process: {y_ma[:5]}')
 y_dlsim = ar_ma_dlsim(e, [1, 0, 0], [1, 0.5, 0.2], "ma")
 y_dlsim = [round(i, 2) for i in y_dlsim.flatten()]
 print(f'y(dlsim) for MA: {y_dlsim[:5]}')
-
-
-
-
-
-
