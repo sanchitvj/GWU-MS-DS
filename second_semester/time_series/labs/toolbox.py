@@ -338,7 +338,7 @@ def ar_ma_order_2(e, a1, a2, process):
 def ar_ma_dlsim(e, num, den, process):
 
     # e = np.random.normal(mean, std, N)
-    system = (num, den, 1) if process == "ar" else (den, num, 1)
+    system = (num, den, 1)# if process == "ar" else (den, num, 1)
     t, y_dlsim = signal.dlsim(system, e)
 
     return y_dlsim
