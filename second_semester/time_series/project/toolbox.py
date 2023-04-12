@@ -2,6 +2,7 @@ import random
 import numpy as np
 import statsmodels.api as sm
 from statsmodels.tsa.stattools import adfuller, kpss
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from sklearn.preprocessing import StandardScaler
 from scipy import signal
 import matplotlib.pyplot as plt
@@ -338,7 +339,7 @@ def ar_ma_order_2(e, a1, a2, process):
 def ar_ma_dlsim(e, num, den, process):
 
     # e = np.random.normal(mean, std, N)
-    system = (num, den, 1) if process == "ar" else (den, num, 1)
+    system = (num, den, 1)# if process == "ar" else (den, num, 1)
     t, y_dlsim = signal.dlsim(system, e)
 
     return y_dlsim
@@ -374,7 +375,71 @@ def ar_process(mean, std):
     return a_hat_orig, den[1:], na, N, a_hat_round
 
 
-# def mse_a_hat():
+def sm_arma_process(lag):
+    N = int(input("Enter number of samples (N): "))
+    mean = float(input("Enter the mean of white noise: "))
+    variance = float(input("Enter the variance of white noise: "))
+    na = int(input("Enter AR order: "))
+    nb = int(input("Enter MA order: "))
+    # e = np.random.normal(mean, std, N)
+
+    ar_coeffs, ma_coeffs = [], []
+    print("Enter the coefficients of AR (separated by space):")
+    ar_coeffs = [float(x) for x in input().split()]
+
+    print("Enter the coefficients of MA (separated by space):")
+    ma_coeffs = [float(x) for x in input().split()]
+
+    ar_params = np.array(ar_coeffs)
+    ma_params = np.array(ma_coeffs)
+    arma_process = sm.tsa.ArmaProcess(ar_params, ma_params)
+    # white_noise = np.sqrt(variance) * np.random.randn(N) + mean
+    mean_y = mean * ((1 + np.sum(ma_params)) / (1 + np.sum(ar_params)))
+    arma_data = arma_process.generate_sample(nsample=N, scale=np.sqrt(variance), distrvs=None, burnin=0,
+                                             axis=0) + mean_y  # + white_noise
+    ryt = arma_process.acf(lags=lag)
+    # ry = ryt[::-1] + ryt[1:]
+    return arma_data, ryt
 
 
+def phi_j_kk(ryt, j, k):
+    num = np.zeros((k, k))
+    den = np.zeros((k, k))
 
+    for col in range(k):    # k+1
+        for row in range(k):    # row -> k
+            if col == k - 1:
+                num[row, col] = ryt[j + row + 1]
+                den[row, col] = ryt[j - k + 1 + row]
+            else:
+                num[row, col] = ryt[j + row + 1 - 1 - col]
+                den[row, col] = num[row, col]
+
+    if np.linalg.det(den) != 0:
+        phi = np.linalg.det(num) / np.linalg.det(den)
+    else:
+        phi = np.inf
+
+    return phi
+
+def gpac(ryt, na, nb):
+
+    gpac_arr = np.zeros((nb, na-1))
+    for k in range(1, na):
+        for j in range(nb):
+            gpac_arr[j, k-1] = phi_j_kk(ryt, j, k)
+
+    return gpac_arr
+
+
+def ACF_PACF_Plot(y, lags):
+    acf = sm.tsa.stattools.acf(y, nlags=lags)
+    pacf = sm.tsa.stattools.pacf(y, nlags=lags)
+    fig = plt.figure()
+    plt.subplot(211)
+    plt.title('ACF/PACF of the raw data')
+    plot_acf(y, ax=plt.gca(), lags=lags)
+    plt.subplot(212)
+    plot_pacf(y, ax=plt.gca(), lags=lags)
+    fig.tight_layout(pad=3)
+    plt.show()
