@@ -399,7 +399,7 @@ def sm_arma_process(lag):
                                              axis=0) + mean_y  # + white_noise
     ryt = arma_process.acf(lags=lag)
     # ry = ryt[::-1] + ryt[1:]
-    return arma_data, ryt
+    return arma_data, ryt, na, nb
 
 
 def phi_j_kk(ryt, j, k):
@@ -432,7 +432,7 @@ def gpac(ryt, na, nb):
     return gpac_arr
 
 
-def ACF_PACF_Plot(y, lags):
+def acf_pacf_plot(y, lags):
     acf = sm.tsa.stattools.acf(y, nlags=lags)
     pacf = sm.tsa.stattools.pacf(y, nlags=lags)
     fig = plt.figure()
