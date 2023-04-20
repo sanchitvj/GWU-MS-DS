@@ -338,7 +338,6 @@ def ar_ma_order_2(e, a1, a2, process):
 
 def ar_ma_dlsim(e, num, den, process):
 
-    # e = np.random.normal(mean, std, N)
     system = (num, den, 1)# if process == "ar" else (den, num, 1)
     t, y_dlsim = signal.dlsim(system, e)
 
@@ -357,8 +356,6 @@ def ar_process(mean, std):
         d = 1 if i == 0 else float(input(f"Enter denominator (coeff) {i}: "))
         num.append(n), den.append(d)
 
-    # system = (num, den, 1)
-    # t, y_dlsim = signal.dlsim(system, e)
     y_dlsim = ar_ma_dlsim(e, num, den, "ar")
 
     y, na = y_dlsim, order
@@ -381,7 +378,6 @@ def sm_arma_process(lag):
     variance = float(input("Enter the variance of white noise: "))
     na = int(input("Enter AR order: "))
     nb = int(input("Enter MA order: "))
-    # e = np.random.normal(mean, std, N)
 
     ar_coeffs, ma_coeffs = [], []
     print("Enter the coefficients of AR (separated by space):")
