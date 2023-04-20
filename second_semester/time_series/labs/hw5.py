@@ -2,24 +2,31 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from toolbox import ar_ma_dlsim
+from scipy import signal
+seed_num = 6313
+np.random.seed(seed_num)
 
-np.random.seed(6313)
+# Example 2: ARMA (0,1):   y(t) =   e(t) + 0.5e(t-1)
+# Example 3: ARMA (1,1):   y(t) + 0.5y(t-1) = e(t) + 0.25e(t-1)            x out of CI est coeffs
+# Example 4: ARMA (2,0): y(t) + 0.5y(t-1) + 0.2y(t-2) = e(t)
+# Example 5: ARMA (2,1):  y(t) + 0.5y(t-1) + 0.2y(t-2) = e(t) - 0.5e(t-1)  x out of CI est coeffs
+# Example 6: ARMA (1,2):  y(t) + 0.5y(t-1) = e(t) + 0.5e(t-1) - 0.4e(t-2)  x wrong est coeffs
+# Example 7: ARMA (0,2): y(t) = e(t) + 0.5e(t-1) - 0.4e(t-2)               x wrong est coeffs
+# Example 8: ARMA (2,2): y(t)+0.5y(t-1) +0.2y(t-2) = e(t)+0.5e(t-1) - 0.4e(t-2)
 
+# N = int(input("Enter number of samples (N): "))
+# na = int(input("Enter AR order: "))
+# nb = int(input("Enter MA order: "))
+#
+# den, num = [], []
+# print("Enter the coefficients of AR (separated by space):")
+# den = [float(x) for x in input().split()]
+# print("Enter the coefficients of MA (separated by space):")
+# num = [float(x) for x in input().split()]
 
-# ARMA (2,1):  y(t) + 0.5y(t-1) + 0.2y(t-2) = e(t) - 0.5e(t-1)
-N = int(input("Enter number of samples (N): "))
-na = int(input("Enter AR order: "))
-nb = int(input("Enter MA order: "))
-
-den, num = [], []
-print("Enter the coefficients of AR (separated by space):")
-den = [float(x) for x in input().split()]
-print("Enter the coefficients of MA (separated by space):")
-num = [float(x) for x in input().split()]
-
-# N = 10000
-# num, den = [1, 0.5, -0.4], [1, 0.5, 0.2]
-# na, nb = 2, 2
+N = 1000
+num, den = [1, 0.5, -0.4], [1, 0.5, 0]
+na, nb = 1, 2
 system = (num, den, 1)
 e = np.random.normal(0, 1, N)
 y = ar_ma_dlsim(e, num, den, "ar")
@@ -31,7 +38,7 @@ true_theta = np.array(true_theta)
 
 
 def arma_model(theta, y, e, na, nb):
-    # np.random.seed(6313)
+    np.random.seed(seed_num)
     T = len(y)
     n = max(na, nb)
     y_pred = np.zeros(T)
@@ -41,19 +48,21 @@ def arma_model(theta, y, e, na, nb):
     den = den if len(den) == n+1 else den + [0] * (n+1-len(den))  # [i for i in np.zeros(n+1-len(den))]
 
     assert len(num) == len(den), f"Length of num {num} must be equal to length of den {den}."
-    # y_pred = ar_ma_dlsim(y, den, num, "ar")
+    # system = (den, num, 1)
+    # _, e_hat = signal.dlsim(system, y)
+    # e_hat = ar_ma_dlsim(y, np.array(den), np.array(num), "ar")
     # e_hat = y_pred
     y_pred = ar_ma_dlsim(e, num, den, "ar")
     for t in range(0, T):
         # y_pred[t] = -theta[0] * y[t - 1] - theta[1] * y[t - 2] + theta[2] * e[t - 1] + e[t]
         e_hat[t] = y[t] - y_pred[t]
-
+    # print(e_hat.shape)
     return y_pred, e_hat
 
 
 # Define the Levenberg-Marquardt algorithm
 def levenberg_marquardt(y, theta0, e, mu0=0.01, mu_max=1e10, epsilon=1e-3, h=1e-6, max_iter=100):
-    # np.random.seed(6313)
+    np.random.seed(seed_num)
     N = len(y)
     n = len(theta0)
     theta = theta0
@@ -68,7 +77,8 @@ def levenberg_marquardt(y, theta0, e, mu0=0.01, mu_max=1e10, epsilon=1e-3, h=1e-
             params_perturb = theta  # np.array(params)
             params_perturb[i] += h
             _, residuals_perturb = arma_model(params_perturb, y, e, na, nb)  # model_func(params_perturb, data)
-            J[:, i] = (e_hat.reshape(-1) - residuals_perturb.reshape(-1)) / h
+            # print(np.array(residuals_perturb).reshape(10000,).shape)
+            J[:, i] = (e_hat - residuals_perturb) / h
 
         A = J.T.dot(J)
         A += mu * np.identity(n)
@@ -92,10 +102,10 @@ def levenberg_marquardt(y, theta0, e, mu0=0.01, mu_max=1e10, epsilon=1e-3, h=1e-
             mu *= 10
             if mu > mu_max:
                 print("Failed to converge. Maximum mu reached.")
-                return theta, None, None
+                return theta, None, None, None, None
 
     print("Failed to converge. Maximum iterations reached.")
-    return theta, None, None
+    return theta, None, None, None, None
 
 
 theta0 = np.zeros(len(true_theta), dtype=np.float64)
@@ -107,8 +117,8 @@ plt.xlabel("Iterations")
 plt.ylabel("SSE")
 plt.show()
 
-zeros = np.roots(theta_hat[:na])
-poles = np.roots(theta_hat[na:])
+zeros = np.roots(np.r_[1, theta_hat[:na]])
+poles = np.roots(np.r_[1, theta_hat[na:]])
 print("Zeros: ", zeros)
 print("Poles: ", poles)
 
@@ -117,8 +127,8 @@ if sigma_e_squared_hat is not None:
         process = "AR"
         if i >= na:
             process = "MA"
-        print(f"Estimated {process} coeff{i}: {(theta_hat[i]):.3f}")
-        print(f"Confidence interval {process} coeff{i}: ",
+        print(f"Estimated {process} coeff{i+1}: {(theta_hat[i]):.3f}")
+        print(f"Confidence interval {process} coeff{i+1}: ",
               [true_theta[i] - 2 * np.sqrt(cov_theta_hat[i, i]), true_theta[i] + 2 * np.sqrt(cov_theta_hat[i, i])])
 
     print("Covariance matrix of estimated coefficients:\n", cov_theta_hat)
