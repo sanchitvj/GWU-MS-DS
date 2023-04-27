@@ -57,6 +57,7 @@ def adf_test(x):
     for key, value in result[4].items():
         if int(key.strip('%')) <= 5:
             print('\t%s: %.3f' % (key, value))
+    return result
 
 
 def kpss_test(timeseries):
@@ -71,6 +72,7 @@ def kpss_test(timeseries):
             # kpss_output['Critical Value (%s)'%key] = value
             # print (kpss_output)
             print('\t%s: %.3f' % (key, value))
+    return kpsstest
 
 
 def non_seasonal_differencing(y, order):
@@ -82,7 +84,34 @@ def non_seasonal_differencing(y, order):
             # diff.append(df[f"{column}"][i] - df[f"{column}"][i - 1])
             diff.append(y[i] - y[i - 1])
 
-    return diff
+    return np.array(diff)
+
+
+def seasonal_differencing(y, seasonal_period):
+    n = len(y)
+    y_seasonal_diff = np.zeros_like(y)  # create an array of zeros with the same shape as y
+    for i in range(seasonal_period, n):
+        y_seasonal_diff[i] = y[i] - y[i - seasonal_period]
+    return y_seasonal_diff
+
+
+def plot_rolling_mean_var(y):
+    roll_mean, roll_var = cal_rolling_mean_var(y)
+    plt.subplot(2, 1, 1)
+    plt.plot(roll_mean, 'b', color='red')
+    plt.title('Rolling Mean')
+    plt.xlabel('Samples')
+    plt.ylabel('Magnitude')
+
+    plt.subplot(2, 1, 2)
+    plt.plot(roll_var, 'b', color='red')
+    plt.title('Rolling Variance')
+    plt.xlabel('Samples')
+    plt.ylabel('Magnitude')
+
+    plt.subplots_adjust(bottom=0.15)
+    plt.tight_layout(h_pad=2.2, w_pad=2)
+    plt.show()
 
 
 def auto_corr(yt, lag, title=None, plot=True, marker_thickness=2, line_width=2):
@@ -337,7 +366,7 @@ def ar_ma_order_2(e, a1, a2, process):
 
 
 def ar_ma_dlsim(e, num, den, process):
-
+    np.random.seed(6313)
     system = (num, den, 1)# if process == "ar" else (den, num, 1)
     t, y_dlsim = signal.dlsim(system, e)
 

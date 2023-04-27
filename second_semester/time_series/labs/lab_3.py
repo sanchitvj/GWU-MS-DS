@@ -47,6 +47,12 @@ x_train_s = scaler.fit_transform(x_train)
 # y_train_s = scaler.transform(y_train.values.reshape(-1, 1))
 # y_test_s = scaler.transform(y_test.values.reshape(-1, 1))
 
+# scaler = StandardScaler()
+# # Fit and transform the data
+# scaled_data = scaler.fit_transform(data)
+# # Create a new dataframe using the scaled data and the original feature names
+# df_scaled = pd.DataFrame(scaled_data, columns=data.columns)
+
 x_one_tr = np.ones((x_train_s.shape[0], 1))  # , np.ones((x_test_s.shape[0], 1))
 X_tr = np.hstack((x_one_tr, x_train_s))  # , np.hstack((x_one_ts, x_test_s))
 # Y_tr = y_train_s, y_test_s
@@ -60,6 +66,20 @@ print("Unknown coefficients (beta): ", beta)
 # print(x_train.columns)
 model = sm.OLS(Y, X).fit()
 print(round(model.params, 2))
+
+# # fit the initial model
+# model = sm.OLS(y, X).fit()
+#
+# # iterate until all features have a p-value less than 0.05
+# while max(model.pvalues) > 0.05:
+#     # remove the feature with the highest p-value
+#     feature_to_remove = model.pvalues.idxmax()
+#     X = X.drop(feature_to_remove, axis=1)
+#
+#     # fit the new model
+#     model = sm.OLS(y, X).fit()
+#
+# print(model.summary())
 
 feats = backward_regression(x_train_s, x_train, Y)
 print("Selected features: ", feats.values)
