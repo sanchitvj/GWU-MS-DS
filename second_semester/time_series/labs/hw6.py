@@ -35,6 +35,7 @@ print(df.isna().sum())
 
 imputer = SimpleImputer(strategy='median')
 df['TotalCharges'] = imputer.fit_transform(df['TotalCharges'].values.reshape(-1, 1))
+print(df.isna().sum())
 
 durations = df['tenure']
 event_observed = df['Churn']
@@ -80,22 +81,22 @@ for cohort in cohorts:
     kmf.fit(cohort_data['duration'], event_observed=cohort_data['observed'], label=cohort)
     kmf.plot_survival_function()
 
-plt.title('Survival for the political regimes based on different regions')
-plt.legend(title='Regions')
-plt.ylabel("Probability")
+plt.subplots(2, 3, figsize=(12, 8))
+ax = plt.gcf().get_axes()
+
+regions = df2['un_continent_name'].unique()
+
+for i, region in enumerate(regions):
+    region_df = df2[df2['un_continent_name'] == region]
+    kmf_regime = KaplanMeierFitter()
+    regimes = region_df['regime'].unique()
+    for regime in regimes:
+        regime_df = region_df[region_df['regime'] == regime]
+        kmf_regime.fit(regime_df['duration'], regime_df['observed'], label=regime)
+        kmf_regime.plot_survival_function(ax=ax[i])
+        ax[i].set(title=region, xlabel='Time', ylabel='Survival Probability')
+        ax[i].legend(title='Regime')
+
+plt.suptitle('Survival of Political Regimes by Region')
+plt.tight_layout()
 plt.show()
-
-# Interpretation: The Kaplan-Meier curves show the estimated survival probabilities
-# over time for the three cohorts ("Month-to-month", "Two year", and "One year").
-# The higher the survival probability, the better the retention. From the plot, we
-# can observe that the "Two year" cohort has the highest survival probability,
-# indicating better retention compared to the other cohorts. The "One year" cohort
-# has intermediate retention, and the "Month-to-month" cohort has the lowest
-# retention as evidenced by the steepest decline in survival probability over time.
-# This suggests that the length of the contract (i.e., the cohort) may affect
-# customer retention, with longer contract lengths generally associated with
-# better retention.
-
-
-
-

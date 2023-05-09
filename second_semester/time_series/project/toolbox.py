@@ -1,10 +1,12 @@
 import random
 import numpy as np
+import pandas as pd
 import statsmodels.api as sm
 from statsmodels.tsa.stattools import adfuller, kpss
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from sklearn.preprocessing import StandardScaler
 from scipy import signal
+from scipy.stats import chi2
 import matplotlib.pyplot as plt
 from pandas_datareader import data
 import yfinance as yf
@@ -85,6 +87,14 @@ def non_seasonal_differencing(y, order):
     return diff
 
 
+def seasonal_differencing(y, seasonal_period):
+    n = len(y)
+    y_seasonal_diff = np.zeros_like(y)  # create an array of zeros with the same shape as y
+    for i in range(seasonal_period, n):
+        y_seasonal_diff[i] = y[i] - y[i - seasonal_period]
+    return y_seasonal_diff
+
+
 def auto_corr(yt, lag, title=None, plot=True, marker_thickness=2, line_width=2):
     y_bar = np.mean(yt)
     ryt = []
@@ -156,6 +166,12 @@ def plt_subplot(data, plot_title, title, row, col, ylab, xlab, acf=False, lag=No
 
 
 def box_pierce_test_q_value(y_hat, lag, t):
+    """
+    :param y_hat:
+    :param lag:
+    :param t: num of observations
+    :return:
+    """
     rk = auto_corr(y_hat, lag, plot=False)
     rk2 = [x ** 2 for x in rk[1:]]
     # rk[1:] because not including acf=1 as it will make Q-value big
@@ -200,7 +216,7 @@ def simple_expo_smoothing_method(yt, yt_hat, i, n_train, alpha=0.5):
 
 
 def backward_regression(x_train_s, x_train, Y):
-    scaler = StandardScaler()
+    # scaler = StandardScaler()
     cols = x_train.columns
     X = sm.add_constant(x_train_s)
     model_orig = sm.OLS(Y, X).fit()
@@ -214,8 +230,8 @@ def backward_regression(x_train_s, x_train, Y):
         for i, x in enumerate(cols):
             new_train = x_train
             new_X_df = new_train.drop(cols[i], axis=1)
-            new_X = scaler.fit_transform(new_X_df)
-            X = sm.add_constant(new_X)
+            # new_X = scaler.fit_transform(new_X_df)
+            X = sm.add_constant(new_X_df)
             new_model = sm.OLS(Y, X).fit()
 
             if aic_orig > new_model.aic or bic_orig > new_model.bic and adj_rsquare < new_model.rsquared_adj:
@@ -231,8 +247,8 @@ def backward_regression(x_train_s, x_train, Y):
                     new_train = x_train
                     new_train = new_train.drop(cols[i], axis=1)
                     new_X_df = new_train.drop(new_train.columns[:j], axis=1)
-                    new_X = scaler.fit_transform(new_X_df)
-                    X = sm.add_constant(new_X)
+                    # new_X = scaler.fit_transform(new_X_df)
+                    X = sm.add_constant(new_X_df)
                     new_model = sm.OLS(Y, X).fit()
 
                     if aic_orig > new_model.aic or bic_orig > new_model.bic and \
@@ -317,6 +333,73 @@ def subplotting(xdata, ydata1, detrended, ydata2, plot_title, title, row, col, y
     # plt.subplots_adjust(bottom=0.1, left=0.11, top=0.85)
     fig.suptitle(plot_title)
     plt.show()
+
+
+def forecasting(method, yt, n_train=None, alpha=0.5):
+    yt_hat = []
+    e = []
+    e2 = []
+    for i in range(len(yt)):
+        if i == 0 and method != "ses":
+            yt_hat.append(np.nan)
+            e.append(np.nan)
+            e2.append(np.nan)
+        else:
+            if method == "average":
+                y_hat = average_method(yt, i, n_train)
+            elif method == "naive":
+                y_hat = naive_method(yt, i, n_train)
+            elif method == "drift":
+                y_hat = drift_method(yt, i, n_train)
+            elif method == "ses":
+                y_hat = simple_expo_smoothing_method(yt, yt_hat, i, n_train, alpha)
+            else:
+                y_hat = yt[i]
+            yt_hat.append(round(y_hat, 3))
+            e.append(round((yt[i] - y_hat), 3))
+            e2.append(round((yt[i] - y_hat) ** 2, 3))
+
+    return yt_hat, e, e2
+
+
+def forecast_plot_test(yt, t, e, e2, cap_yt, method, n_train, results=True, alpha=None, lag=5):
+    # plt.figure(figsize=(10, 8))
+    if method != "SES":
+        plt.plot(t[:n_train], yt[:n_train], color='blue', label="training dataset")
+        plt.plot(t[n_train:], yt[n_train:], color='orange', label="test dataset")
+        plt.plot(t[n_train:], cap_yt[n_train:], color='green', label=f"{method} method h-step prediction")
+        plt.title(f"{method} Method Forecast")
+    else:
+        # plt.plot(t, yt, color='blue', label="original")
+        # plt.plot(t[:9], cap_yt[:9], color='orange', label=f"{method} 1-step prediction")
+        # plt.plot(t[9:], cap_yt[9:], color='green', label=f"{method} h-step prediction")
+        plt.plot(t[:n_train], yt[:n_train], color='blue', label="training dataset")
+        plt.plot(t[n_train:], yt[n_train:], color='orange', label="test dataset")
+        plt.plot(t[n_train:], cap_yt[n_train:], color='green', label=f"{method} method h-step prediction")
+        plt.title(f"{method} Method Forecast with alpha = {alpha}")
+    plt.ylabel("yt")
+    plt.xlabel("time")
+    plt.legend(loc='lower left')
+    plt.show()
+
+    mse_tr, mse_ts = round(np.nanmean(e2[2:n_train]), 3), round(np.nanmean(e2[n_train:]), 3)
+    var_tr, var_ts = round(np.nanvar(e[2:n_train]), 3), round(np.nanvar(e[n_train:]), 3)
+    q_value = box_pierce_test_q_value(e[2:n_train], lag, n_train - 2)
+    mean_e = round(np.mean(e[2:n_train]), 3)
+    res = [mean_e, mse_tr, mse_ts, var_tr, var_ts, q_value]
+    if results:
+        print("\n")
+        print(f"Results using {method} method forecast: ")
+        # print("y_hat_t: ", cap_yt)
+        # print("Error: ", e)
+        # print("Error-squared: ", e2)
+        print("MSE training: ", mse_tr)
+        print("MSE testing: ", mse_ts)
+        print("Variance training: ", var_tr)
+        print("Variance testing: ", var_ts)
+        print("Q-value: ", q_value)
+
+    return res
 
 
 def ar_ma_order_2(e, a1, a2, process):
@@ -412,7 +495,7 @@ def phi_j_kk(ryt, j, k):
                 num[row, col] = ryt[j + row + 1]
                 den[row, col] = ryt[j - k + 1 + row]
             else:
-                num[row, col] = ryt[j + row + 1 - 1 - col]
+                num[row, col] = ryt[j + row - col]  # row -> k-1
                 den[row, col] = num[row, col]
 
     if np.linalg.det(den) != 0:
@@ -420,7 +503,7 @@ def phi_j_kk(ryt, j, k):
     else:
         phi = np.inf
 
-    return phi
+    return round(phi, 3)
 
 def gpac(ryt, na, nb):
 
@@ -432,7 +515,7 @@ def gpac(ryt, na, nb):
     return gpac_arr
 
 
-def ACF_PACF_Plot(y, lags):
+def acf_pacf_plot(y, lags):
     acf = sm.tsa.stattools.acf(y, nlags=lags)
     pacf = sm.tsa.stattools.pacf(y, nlags=lags)
     fig = plt.figure()
@@ -441,5 +524,232 @@ def ACF_PACF_Plot(y, lags):
     plot_acf(y, ax=plt.gca(), lags=lags)
     plt.subplot(212)
     plot_pacf(y, ax=plt.gca(), lags=lags)
-    fig.tight_layout(pad=3)
+    fig.tight_layout(pad=2)
     plt.show()
+
+
+def error_analysis(yt, pred, n, s_o):
+    error = []
+    e_squared = []
+    for i in range(0, len(yt)):
+        if pred[i] == np.nan:
+            error.append(np.nan)
+            e_squared.append(np.nan)
+        else:
+            error.append(yt[i] - pred[i])
+            e_squared.append(error[i] ** 2)
+
+    mse_tr = np.nanmean(e_squared[s_o:n])
+    mse_ts = np.nanmean(e_squared[n:])
+    res_mean = np.nanmean(error[s_o:n])
+    var_pred = np.nanvar(error[s_o:n])
+    var_fcst = np.nanvar(error[n:])
+
+    print(f'Mean of residual error is {np.round(res_mean, 2)}')
+    print(f'MSE of residual error for  is {np.round(mse_tr, 2)}')
+    print(f'Variance of residual error   is {np.round(var_pred, 2)}')
+    print(f'Variance of forecast error  is {np.round(var_fcst, 2)}')
+    print(f'Ratio of variance of residual errors versus variance of forecast errors : {np.round(var_pred / var_fcst, 2)}')
+
+    return error, e_squared, mse_tr, mse_ts, var_pred, var_fcst, res_mean
+
+
+def model_coefficients_and_intervals(model, na, nb):
+    for i in range(na):
+        print(f'The AR coefficient a{i} is: {-1 * model.params[i]}')
+    for i in range(nb):
+        print(f'The MA coefficient a{i} is: {model.params[i + na]}')
+
+    for i in range(0, na):
+        print(f"The confidence interval for a{i} is: {-model.conf_int()[0][i]} and {-model.conf_int()[1][i]}")
+        zero_in_interval = ((-model.conf_int()[0][i] < 0) & (-model.conf_int()[1][i] > 0)).any()
+        print("Zero in confidence interval: ", zero_in_interval)
+        if zero_in_interval:
+            print("Model is biased because of zero in confidence interval.")
+        else:
+            print("Model is unbiased.")
+    for i in range(0, nb):
+        print(f"The confidence interval for b{i} is: {model.conf_int()[0][i + na]} and {model.conf_int()[1][i + na]}")
+        zero_in_interval = ((model.conf_int()[0][i + na] < 0) & (model.conf_int()[1][i + na] > 0)).any()
+        print("Zero in confidence interval: ", zero_in_interval)
+        if zero_in_interval:
+            print("Model is biased because of zero in confidence interval.")
+        else:
+            print("Model is unbiased.")
+
+
+def arima_model(na, nb, lags, y_train, y_test):
+    model = sm.tsa.SARIMAX(y_train, order=(na, 0, 0), seasonal_order=(0, 0, nb, 24)).fit()
+    print(model.summary())
+    model_hat = model.predict()
+    test_forecast = model.forecast(len(y_test))
+    error_analysis(pd.concat([y_train, y_test]), pd.concat([model_hat, test_forecast]), len(y_train), 0)
+    acf_pacf_plot(model.resid, lags)
+    Q = sm.stats.acorr_ljungbox(model.resid, lags=[50], boxpierce=True, return_df=True)['bp_stat'].values[0]
+    print("Q-Value for ARIMA residuals: ", Q)
+    DOF = lags - na - nb
+    alfa = 0.01
+    chi_critical = chi2.ppf(1 - alfa, DOF)
+    if Q < chi_critical:
+        print("As Q-value is less than chi-2 critical, Residual is white")
+    else:
+        print("As Q-value is greater than chi-2 critical, Residual is NOT white")
+    model_coefficients_and_intervals(model, na, nb)
+    result = sm.stats.acorr_ljungbox(model.resid, model_df=1, boxpierce=True, lags=[20])
+    print(result)
+    plt.plot(list(y_train.index.values + 1), y_train, label='Training dataset')
+    plt.plot(list(y_test.index.values + 1), y_test, label='Testing dataset', color='orange')
+    plt.plot(list(y_test.index.values + 1), test_forecast, label='Forecast',  color='green')
+    plt.xlabel('Time')
+    plt.ylabel('Magnitude')
+    plt.title('SARIMA')
+    plt.legend()
+    plt.tight_layout()
+    # plt.savefig('sarima.png')
+    plt.show()
+
+
+def compute_lm_step1(y, na, nb, delta, theta):
+    n1 = na + nb
+    e = calculate_error(y, na, theta)
+    sse_old = np.dot(e.T, e)[0][0]
+    X = np.empty((len(y), n1))
+    for i in range(n1):
+        theta[i] += delta
+        e_i = calculate_error(y, na, theta)
+        x_i = (e - e_i) / delta
+        X[:, i] = x_i[:, 0]
+        theta[i] -= delta
+    A = np.dot(X.T, X)
+    g = np.dot(X.T, e)
+    return A, g, X, sse_old
+
+
+def compute_lm_step2(y, na, A, theta, mu, g):
+    delta_theta = np.linalg.solve(A + mu * np.eye(A.shape[0]), g)
+    theta_new = theta + delta_theta
+    e_new = calculate_error(y, na, theta_new)
+    sse_new = np.dot(e_new.T, e_new)[0][0]
+    if np.isnan(sse_new):
+        sse_new = 10 ** 10
+    return sse_new, delta_theta, theta_new
+
+
+def compute_lm_step3(y, na, nb):
+    N = len(y)
+    n = na + nb
+    mu = 0.01
+    mu_max = 10 ** 20
+    max_iterations = 100
+    delta = 10 ** -6
+    var_e = 0
+    covariance_theta_hat = 0
+    sse_list = []
+    theta = np.zeros((n, 1))
+
+    for iterations in range(max_iterations):
+        A, g, X, sse_old = compute_lm_step1(y, na, nb, delta, theta)
+        sse_new, delta_theta, theta_new = compute_lm_step2(y, na, A, theta, mu, g)
+        sse_list.append(sse_old)
+        if iterations < max_iterations:
+            if sse_new < sse_old:
+                if np.linalg.norm(delta_theta, 2) < 10 ** -3:
+                    theta_hat = theta_new
+                    var_e = sse_new / (N - n)
+                    covariance_theta_hat = var_e * np.linalg.inv(A)
+                    print("Convergence Occured in ", iterations)
+                    break
+                else:
+                    theta = theta_new
+                    mu /= 10
+            while sse_new >= sse_old:
+                mu = mu * 10
+                if mu > mu_max:
+                    print('No Convergence')
+                    break
+                sse_new, delta_theta, theta_new = compute_lm_step2(y, na, A, theta, mu, g)
+        else:
+            print('Max Iterations Reached')
+            break
+        theta = theta_new
+    return theta_new, sse_new, var_e, covariance_theta_hat, sse_list
+
+
+def lm_confidence_interval(theta, cov, na, nb):
+    print("Confidence Interval for the Estimated Parameters")
+    lower_bound = theta - 2 * np.sqrt(np.diag(cov))
+    upper_bound = theta + 2 * np.sqrt(np.diag(cov))
+    round_off = 3
+    lower_bound = np.round(lower_bound, decimals=round_off)
+    upper_bound = np.round(upper_bound, decimals=round_off)
+    for i in range(na + nb):
+        if i < na:
+            print(f"AR Coefficient {i+1}: ({lower_bound[i][0]}, {upper_bound[i][0]})")
+        else:
+            print(f"MA Coefficient {i + 1 - na}: ({lower_bound[i][0]}, {upper_bound[i][0]})")
+
+
+def calculate_error(y, na, theta):
+    np.random.seed(6313)
+    den = theta[:na]
+    num = theta[na:]
+    if len(den) > len(num):
+        for x in range(len(den) - len(num)):
+            num = np.append(num, 0)
+    elif len(num) > len(den):
+        for x in range(len(num) - len(den)):
+            den = np.append(den, 0)
+    den = np.insert(den, 0, 1)
+    num = np.insert(num, 0, 1)
+    sys = (den, num, 1)
+    _, e = signal.dlsim(sys, y)
+    return e
+
+
+def find_roots(theta, na):
+    den = theta[:na]
+    num = theta[na:]
+    if len(den) > len(num):
+        num = np.pad(num, (0, len(den) - len(num) - 1), mode='constant')
+    elif len(num) > len(den):
+        den = np.pad(den, (0, len(num) - len(den) - 1), mode='constant')
+    den = np.insert(den, 0, 1)
+    num = np.insert(num, 0, 1)
+    roots_num = np.round(np.roots(num), decimals=3)
+    roots_den = np.round(np.roots(den), decimals=3)
+    print("Poles :", roots_num)
+    print("Zeros:", roots_den)
+
+
+def plot_sse(sse_list):
+    plt.plot(sse_list)
+    plt.xlabel('Iterations')
+    plt.ylabel('SSE')
+    plt.title('SSE over the iterations')
+    plt.savefig("sse.png")
+    plt.show()
+
+
+def lm(y, na, nb):
+    theta, sse, var_error, cov_theta_hat, sse_list = compute_lm_step3(y, na, nb)
+    theta2 = np.array(theta).reshape(-1)
+    for i in range(na + nb):
+        if i < na:
+            ar_coef = "{:.3f}".format(theta2[i])
+            print(f"The AR coefficient {i + 1} is: {ar_coef}")
+        else:
+            ma_coef = "{:.3f}".format(theta2[i])
+            print(f"The MA coefficient {i - na + 1} is: {ma_coef}")
+
+    lm_confidence_interval(theta, cov_theta_hat, na, nb)
+    cov_theta_hat_rounded = np.round(cov_theta_hat, decimals=3)
+    print("Estimated Covariance Matrix of estimated parameters:")
+    print(cov_theta_hat_rounded)
+    var_error_rounded = round(var_error, 3)
+    print("Estimated variance of error:", var_error_rounded)
+    find_roots(theta, na)
+    plot_sse(sse_list)
+
+
+
+
